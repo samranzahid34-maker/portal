@@ -166,7 +166,12 @@ def fetch_students_from_sheets():
                 sheet_id, range_val, name = source
             else:
                 sheet_id, range_val = source
+                name = "Unknown"
                 
+            print(f"\n=== Fetching from sheet: {name} ===")
+            print(f"Sheet ID: {sheet_id}")
+            print(f"Range: {range_val}")
+            
             try:
                 # Use default range if not specified or invalid (Sheet1!A2:Z skipping header)
                 # Ideally we want A1:Z to see headers, but let's assume standard structure
@@ -176,10 +181,18 @@ def fetch_students_from_sheets():
                 ).execute()
                 
                 rows = result.get('values', [])
-                for row in rows:
+                print(f"Got {len(rows)} rows from sheet")
+                
+                if len(rows) > 0:
+                    print(f"First row sample: {rows[0][:3] if len(rows[0]) >= 3 else rows[0]}")
+                
+                for idx, row in enumerate(rows):
                     if row and len(row) >= 2:
                         roll_no = row[0].strip()
                         name = row[1].strip()
+                        
+                        if idx < 3:  # Log first 3 students
+                            print(f"  Student {idx+1}: Roll={roll_no}, Name={name}")
                         
                         # Parse marks
                         marks_data = {}
@@ -197,11 +210,18 @@ def fetch_students_from_sheets():
                             'name': name,
                             'marks': marks_data
                         })
+                        
+                print(f"Added {len(rows)} students from this sheet")
+                        
             except Exception as e:
-                print(f"Error fetching from sheet {sheet_id}: {e}")
+                print(f"❌ Error fetching from sheet {sheet_id}: {e}")
+                import traceback
+                traceback.print_exc()
         
         student_cache = all_students
-        print(f"✓ Cached {len(all_students)} students from Google Sheets")
+        print(f"\n✓ Total cached: {len(all_students)} students")
+        if all_students:
+            print(f"Sample roll numbers: {[s['rollNumber'] for s in all_students[:5]]}")
         return all_students
     except Exception as e:
         print(f"Error fetching students: {e}")

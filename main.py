@@ -104,11 +104,14 @@ def init_db():
     except Exception as e:
         print(f"DB Init Error: {e}")
 
+sheet_init_error = None
+
 def initialize_google_sheets():
-    global sheets_service
+    global sheets_service, sheet_init_error
     try:
         credentials_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
         if not credentials_json:
+            sheet_init_error = "GOOGLE_CREDENTIALS_JSON not found in env"
             print("⚠ Google Sheets credentials not configured")
             return False
         
@@ -122,6 +125,7 @@ def initialize_google_sheets():
         print("✓ Google Sheets initialized")
         return True
     except Exception as e:
+        sheet_init_error = str(e)
         print(f"✗ Google Sheets initialization failed: {e}")
         return False
 
@@ -353,6 +357,7 @@ async def health_check():
         "status": "Server is running",
         "database": "SQLite3",
         "sheetsConnected": sheets_service is not None,
+        "initError": sheet_init_error,
         "cachedStudents": len(student_cache)
     }
 

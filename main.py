@@ -131,11 +131,25 @@ def fetch_students_from_sheets():
         return []
     
     try:
-        conn = sqlite3.connect(DATABASE_PATH)
-        cursor = conn.cursor()
-        cursor.execute("SELECT sheet_id, range FROM sources")
-        sources = cursor.fetchall()
-        conn.close()
+        # Load sources from Permanent Google Sheet Config
+        sources = get_sheet_sources()
+        
+        # Also include DEFAULT_SHEET_ID from Env if not already in sources
+        default_sheet = os.getenv("DEFAULT_SHEET_ID")
+        if default_sheet and not any(s[0] == default_sheet for s in sources):
+            sources.insert(0, (default_sheet, "Sheet1!A2:Z"))
+            
+        # Fallback to SQLite (Ephemeral) if no sheets configured
+        if not sources:
+             try:
+                conn = sqlite3.connect(DATABASE_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT sheet_id, range FROM sources")
+                db_sources = cursor.fetchall()
+                conn.close()
+                for s in db_sources:
+                    sources.append((s[0], s[1]))
+             except: pass
         
         all_students = []
         
@@ -280,6 +294,42 @@ def append_user_to_sheet(env_var_name, role, roll, name, email, hashed_password)
         return True
     except Exception as e:
         print(f"Sheet Append Error ({env_var_name}): {e}")
+        return False
+
+def get_sheet_sources():
+    """Fetch list of Marking Sheets from the Admin Config Sheet"""
+    sheet_id = os.getenv("ADMIN_SHEET_ID")
+    if not sheet_id or not sheets_service: return []
+    try:
+        # Format: SheetID | Range
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range="Sources!A:B"
+        ).execute()
+        rows = result.get('values', [])
+        sources = []
+        for row in rows[1:]: # Skip header
+             if len(row) >= 1:
+                 sid = row[0].strip()
+                 rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
+                 sources.append((sid, rng))
+        return sources
+    except Exception as e:
+        print(f"Source Config Read Error: {e}")
+        return []
+
+def append_source_to_sheet(target_sheet_id, target_range):
+    """Save a new Marking Sheet ID to the Admin Config Sheet"""
+    config_sheet_id = os.getenv("ADMIN_SHEET_ID")
+    if not config_sheet_id or not sheets_service: return False
+    try:
+        body = {"values": [[target_sheet_id, target_range]]}
+        sheets_service.spreadsheets().values().append(
+            spreadsheetId=config_sheet_id, range="Sources!A:B",
+            valueInputOption="RAW", body=body
+        ).execute()
+        return True
+    except Exception as e:
+        print(f"Source Config Write Error: {e}")
         return False
 
 def verify_password(plain_password, hashed_password):
@@ -495,6 +545,13 @@ async def login_admin(credentials: AdminLogin):
 
 @app.post("/api/admin/add-source")
 async def add_source(source: AddSource):
+    # 1. OPTION A: Google Sheet Config (Permanent)
+    if append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z"):
+         # Refresh immediately
+         fetch_students_from_sheets()
+         return {"success": True, "message": "Source added permanently to Admin Sheet!"}
+
+    # 2. OPTION B: SQLite (Ephemeral)
     conn = get_db()
     cursor = conn.cursor()
     
@@ -509,7 +566,7 @@ async def add_source(source: AddSource):
         # Refresh student cache immediatley when admin adds source
         fetch_students_from_sheets()
         
-        return {"success": True, "message": "Source added successfully"}
+        return {"success": True, "message": "Source added (Ephemeral). Configure Sheets for permanence."}
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Failed to add source: {str(e)}")

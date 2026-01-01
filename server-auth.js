@@ -313,10 +313,10 @@ function authenticateToken(req, res, next) {
 // API Endpoint: Register a student
 app.post('/api/register', async (req, res) => {
     try {
-        const { rollNo, email } = req.body;
+        const { rollNo, email, password } = req.body; // Added password
 
-        if (!rollNo || !email) {
-            return res.status(400).json({ success: false, error: 'Roll number and email are required' });
+        if (!rollNo || !email || !password) { // Check for password
+            return res.status(400).json({ success: false, error: 'Roll number, email, and password are required' });
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -348,11 +348,14 @@ app.post('/api/register', async (req, res) => {
             return res.status(409).json({ success: false, error: 'This roll number is already registered. Please login instead.' });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10); // Hash password
+
         const userData = {
             normalizedRollNo: userNormalizedRollVal,
             rollNo: student.rollNo,
             email: normalizedEmail,
             name: student.name,
+            password: hashedPassword, // Save hashed password
             registeredAt: new Date()
         };
 
@@ -374,9 +377,9 @@ app.post('/api/register', async (req, res) => {
 // API Endpoint: Login
 app.post('/api/login', async (req, res) => {
     try {
-        const { rollNo, email } = req.body;
+        const { rollNo, email, password } = req.body; // Added password
 
-        if (!rollNo || !email) return res.status(400).json({ success: false, error: 'Roll number and email are required' });
+        if (!rollNo || !email || !password) return res.status(400).json({ success: false, error: 'Roll number, email, and password are required' });
 
         const userNormalizedRollVal = normalizeCode(rollNo);
         const normalizedEmail = email.toLowerCase().trim();
@@ -390,6 +393,12 @@ app.post('/api/login', async (req, res) => {
         // Check roll and email
         if (registration.email !== normalizedEmail) {
             return res.status(401).json({ success: false, error: 'Invalid roll number or email combination.' });
+        }
+
+        // Check password
+        const passwordMatch = await bcrypt.compare(password, registration.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ success: false, error: 'Invalid password.' });
         }
 
         const token = jwt.sign(

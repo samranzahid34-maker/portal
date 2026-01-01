@@ -27,8 +27,9 @@ if (registerForm) {
         const rollNo = document.getElementById('registerRollNumber').value.trim();
         const email = document.getElementById('registerEmail').value.trim();
         const name = document.getElementById('registerName').value.trim();
+        const password = document.getElementById('registerPassword').value;
 
-        if (!rollNo || !email || !name) {
+        if (!rollNo || !email || !name || !password) {
             showAlert('Please fill in all fields', 'error');
             return;
         }
@@ -37,7 +38,7 @@ if (registerForm) {
             const response = await fetch(`${API_BASE_URL}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rollNo, email, name })
+                body: JSON.stringify({ rollNo, email, name, password })
             });
 
             const data = await response.json();
@@ -67,8 +68,9 @@ if (loginForm) {
 
         const rollNo = document.getElementById('loginRollNumber').value.trim();
         const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
 
-        if (!rollNo || !email) {
+        if (!rollNo || !email || !password) {
             showAlert('Please fill in all fields', 'error');
             return;
         }
@@ -77,7 +79,7 @@ if (loginForm) {
             const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rollNo, email })
+                body: JSON.stringify({ rollNo, email, password })
             });
 
             const data = await response.json();

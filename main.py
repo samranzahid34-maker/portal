@@ -141,7 +141,7 @@ def fetch_students_from_sheets():
         # Also include DEFAULT_SHEET_ID from Env if not already in sources
         default_sheet = os.getenv("DEFAULT_SHEET_ID")
         if default_sheet and not any(s[0] == default_sheet for s in sources):
-            sources.insert(0, (default_sheet, "Sheet1!A2:Z"))
+            sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
             
         # Fallback to SQLite (Ephemeral) if no sheets configured
         if not sources:
@@ -160,7 +160,13 @@ def fetch_students_from_sheets():
         # Standard headers based on user request
         headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
         
-        for sheet_id, range_val in sources:
+        for source in sources:
+            # Handle both old 2-item and new 3-item tuple formats
+            if len(source) == 3:
+                sheet_id, range_val, name = source
+            else:
+                sheet_id, range_val = source
+                
             try:
                 # Use default range if not specified or invalid (Sheet1!A2:Z skipping header)
                 # Ideally we want A1:Z to see headers, but let's assume standard structure

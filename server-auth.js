@@ -53,12 +53,29 @@ const RegistrationModel = mongoose.model('Registration', RegistrationSchema);
 const AdminModel = mongoose.model('Admin', AdminSchema);
 const SourceModel = mongoose.model('Source', SourceSchema);
 
+// Vercel serverless optimization: cache the connection
+let cachedConnection = null;
+
 async function connectDB() {
     if (process.env.MONGODB_URI) {
+        // Return cached connection if it exists and is ready
+        if (cachedConnection && mongoose.connection.readyState === 1) {
+            isMongoConnected = true;
+            console.log('✓ Using cached MongoDB connection');
+            return;
+        }
+
         try {
             console.log('Attempting to connect to MongoDB...');
             console.log('URI starts with:', process.env.MONGODB_URI.substring(0, 30));
-            await mongoose.connect(process.env.MONGODB_URI);
+
+            // Optimized connection options for Vercel serverless
+            await mongoose.connect(process.env.MONGODB_URI, {
+                serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+                socketTimeoutMS: 45000,
+            });
+
+            cachedConnection = mongoose.connection;
             isMongoConnected = true;
             console.log('✓ Connected to MongoDB successfully');
         } catch (err) {
@@ -66,6 +83,7 @@ async function connectDB() {
             console.error('Error message:', err.message);
             console.error('Error name:', err.name);
             console.error('Full error:', JSON.stringify(err, null, 2));
+            isMongoConnected = false;
             // We do not fallback to file system anymore. Fatal error if DB essential.
         }
     } else {

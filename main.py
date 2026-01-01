@@ -254,6 +254,7 @@ class AdminLogin(BaseModel):
 class AddSource(BaseModel):
     sheetId: str
     range: Optional[str] = "Sheet1!A2:Z" # Default to skipping header row
+    name: Optional[str] = "" # Friendly name for the sheet
 
 # Helper functions
 def get_db():
@@ -307,9 +308,9 @@ def get_sheet_sources():
     sheet_id = os.getenv("ADMIN_SHEET_ID")
     if not sheet_id or not sheets_service: return []
     try:
-        # Format: SheetID | Range
+        # Format: SheetID | Range | Name
         result = sheets_service.spreadsheets().values().get(
-            spreadsheetId=sheet_id, range="Sources!A:B"
+            spreadsheetId=sheet_id, range="Sources!A:C"
         ).execute()
         rows = result.get('values', [])
         sources = []
@@ -317,21 +318,22 @@ def get_sheet_sources():
              if len(row) >= 1:
                  sid = row[0].strip()
                  rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
-                 sources.append((sid, rng))
+                 name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
+                 sources.append((sid, rng, name))
         return sources
     except Exception as e:
         print(f"Source Config Read Error: {e}")
         return []
 
-def append_source_to_sheet(target_sheet_id, target_range):
+def append_source_to_sheet(target_sheet_id, target_range, sheet_name=""):
     """Save a new Marking Sheet ID to the Admin Config Sheet"""
     config_sheet_id = os.getenv("ADMIN_SHEET_ID")
     if not config_sheet_id or not sheets_service: 
         return False, "ADMIN_SHEET_ID not configured or Sheets service not initialized"
     try:
-        body = {"values": [[target_sheet_id, target_range]]}
+        body = {"values": [[target_sheet_id, target_range, sheet_name]]}
         sheets_service.spreadsheets().values().append(
-            spreadsheetId=config_sheet_id, range="Sources!A:B",
+            spreadsheetId=config_sheet_id, range="Sources!A:C",
             valueInputOption="RAW", body=body
         ).execute()
         return True, "Success"
@@ -573,7 +575,7 @@ async def login_admin(credentials: AdminLogin):
 @app.post("/api/admin/add-source")
 async def add_source(source: AddSource):
     # 1. OPTION A: Google Sheet Config (Permanent)
-    success, msg = append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z")
+    success, msg = append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z", source.name or "")
     if success:
          # Refresh immediately
          fetch_students_from_sheets()
@@ -601,10 +603,10 @@ async def get_sources():
     # 2. Add Default if present
     default_sheet = os.getenv("DEFAULT_SHEET_ID")
     if default_sheet and not any(s[0] == default_sheet for s in sources):
-        sources.insert(0, (default_sheet, "Sheet1!A2:Z (Default)"))
+        sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
 
     # Format for frontend
-    data = [{"sheetId": s[0], "range": s[1]} for s in sources]
+    data = [{"sheetId": s[0], "range": s[1], "name": s[2] if len(s) > 2 else s[0][:15] + "..."} for s in sources]
     return {"success": True, "sources": data}
 
 # Serve static files with absolute path

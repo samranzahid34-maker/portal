@@ -713,6 +713,15 @@ async function startServer() {
 process.on('unhandledRejection', (error) => console.error('Unhandled rejection:', error));
 process.on('uncaughtException', (error) => { console.error('Uncaught exception:', error); process.exit(1); });
 
+// Initialize connections immediately for Vercel serverless
+connectDB();
+initializeGoogleSheets().then(sheetsInitialized => {
+    if (sheetsInitialized) {
+        console.log('⟳  Initial data fetch started...');
+        getCachedStudents(true).catch(err => console.error('Initial fetch failed:', err.message));
+    }
+});
+
 if (require.main === module) {
     startServer();
 }

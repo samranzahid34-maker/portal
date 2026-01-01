@@ -480,16 +480,24 @@ async def login_student(credentials: StudentLogin):
 async def get_marks(roll_number: str):
     ensure_cache()
     
+    print(f"Looking for roll number: '{roll_number}'")
+    print(f"Cache has {len(student_cache)} students")
+    if student_cache:
+        print(f"Sample roll numbers in cache: {[s['rollNumber'] for s in student_cache[:3]]}")
+    
     student = next((s for s in student_cache if s['rollNumber'] == roll_number), None)
     
     if not student:
         # Try fresh fetch
+        print("Student not found, refreshing cache...")
         fetch_students_from_sheets()
         student = next((s for s in student_cache if s['rollNumber'] == roll_number), None)
     
     if not student:
-        raise HTTPException(status_code=404, detail="Student marks not found")
+        print(f"Student '{roll_number}' not found in cache after refresh")
+        raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
     
+    print(f"Found student: {student['name']} with {len(student.get('marks', {}))} marks")
     return {
         "success": True,
         "student": student

@@ -602,6 +602,20 @@ async def refresh_data():
     fetch_students_from_sheets()
     return {"success": True, "message": "Data refreshed from Google Sheets"}
 
+@app.get("/api/admin/sources")
+async def get_sources():
+    # 1. Get Permanent Sources
+    sources = get_sheet_sources()
+    
+    # 2. Add Default if present
+    default_sheet = os.getenv("DEFAULT_SHEET_ID")
+    if default_sheet and not any(s[0] == default_sheet for s in sources):
+        sources.insert(0, (default_sheet, "Sheet1!A2:Z (Default)"))
+
+    # Format for frontend
+    data = [{"sheetId": s[0], "range": s[1]} for s in sources]
+    return {"success": True, "sources": data}
+
 # Serve static files with absolute path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 public_path = os.path.join(current_dir, "public")

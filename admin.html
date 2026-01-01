@@ -210,8 +210,9 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('Source added and data refreshed!');
+                    alert(data.message);
                     document.getElementById('sheet-id').value = '';
+                    loadSources();
                 } else {
                     alert('Failed to add source');
                 }
@@ -245,6 +246,7 @@
                 document.getElementById('admin-login').style.display = 'none';
                 document.getElementById('admin-register').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'grid';
+                loadSources();
             }
         }
 
@@ -261,6 +263,27 @@
         function logout() {
             localStorage.removeItem('adminToken');
             location.reload();
+        }
+
+        async function loadSources() {
+            try {
+                const res = await fetch(`${API_URL}/sources`);
+                const data = await res.json();
+                if (data.success && data.sources) {
+                    const list = document.getElementById('source-list');
+                    list.innerHTML = data.sources.map(s => `
+                        <div class="source-item">
+                            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;">
+                                <strong>${s.sheetId}</strong>
+                                <br><small style="color: #64748b">${s.range}</small>
+                            </div>
+                            <div style="color: #10b981; font-size: 0.9rem; font-weight: 500;">● Active</div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('source-list').innerHTML = '<div style="padding:1rem">No configurations found</div>';
+                }
+            } catch (e) { console.error("Failed to load sources"); }
         }
 
         checkAuth();

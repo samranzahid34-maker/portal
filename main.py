@@ -244,19 +244,20 @@ def get_db():
     return conn
 
 # Google Sheets User DB Helpers
-def get_sheet_users():
-    sheet_id = os.getenv("DEFAULT_SHEET_ID")
+def get_sheet_users(env_var_name="STUDENT_SHEET_ID"):
+    sheet_id = os.getenv(env_var_name)
     if not sheet_id or not sheets_service: return []
     try:
+        # Default to Sheet1 since these are dedicated files
         result = sheets_service.spreadsheets().values().get(
-            spreadsheetId=sheet_id, range="Users!A:E"
+            spreadsheetId=sheet_id, range="Sheet1!A:E"
         ).execute()
         rows = result.get('values', [])
         users = []
         for row in rows[1:]: # Skip header
              if len(row) >= 5:
                  users.append({
-                     "role": row[0], # student/admin
+                     "role": row[0], 
                      "rollNumber": row[1],
                      "name": row[2],
                      "email": row[3],
@@ -264,21 +265,21 @@ def get_sheet_users():
                  })
         return users
     except Exception as e:
-        print(f"Sheet Auth Error: {e}")
+        print(f"Sheet Auth Error ({env_var_name}): {e}")
         return []
 
-def append_user_to_sheet(role, roll, name, email, hashed_password):
-    sheet_id = os.getenv("DEFAULT_SHEET_ID")
+def append_user_to_sheet(env_var_name, role, roll, name, email, hashed_password):
+    sheet_id = os.getenv(env_var_name)
     if not sheet_id or not sheets_service: return False
     try:
         body = {"values": [[role, roll, name, email, hashed_password]]}
         sheets_service.spreadsheets().values().append(
-            spreadsheetId=sheet_id, range="Users!A:E",
+            spreadsheetId=sheet_id, range="Sheet1!A:E",
             valueInputOption="RAW", body=body
         ).execute()
         return True
     except Exception as e:
-        print(f"Sheet Append Error: {e}")
+        print(f"Sheet Append Error ({env_var_name}): {e}")
         return False
 
 def verify_password(plain_password, hashed_password):
@@ -324,11 +325,11 @@ async def register_student(student: StudentRegister):
     
     # 1. OPTION A: Google Sheets DB (Permanent & Editable)
     # Check duplicates in sheet
-    sheet_users = get_sheet_users()
+    sheet_users = get_sheet_users("STUDENT_SHEET_ID")
     if any(u['rollNumber'] == student.rollNumber for u in sheet_users):
          raise HTTPException(status_code=400, detail="Student already registered (in Sheet)")
 
-    if append_user_to_sheet('student', student.rollNumber, student.name, student.email, hashed_password):
+    if append_user_to_sheet("STUDENT_SHEET_ID", 'student', student.rollNumber, student.name, student.email, hashed_password):
          return {"success": True, "message": "Registration successful! Account saved to Google Sheet."}
 
     # 2. OPTION B: SQLite (Fallback / Ephemeral)
@@ -354,7 +355,7 @@ async def register_student(student: StudentRegister):
 @app.post("/api/login")
 async def login_student(credentials: StudentLogin):
     # 1. OPTION A: Google Sheet DB
-    sheet_users = get_sheet_users()
+    sheet_users = get_sheet_users("STUDENT_SHEET_ID")
     user = next((u for u in sheet_users 
                  if u['rollNumber'] == credentials.rollNumber 
                  and u['email'].lower() == credentials.email.lower()), None)
@@ -421,6 +422,18 @@ async def get_marks(roll_number: str):
 
 @app.post("/api/admin/register")
 async def register_admin(admin: AdminRegister):
+    hashed_password = get_password_hash(admin.password)
+    
+    # 1. OPTION A: Google Sheets DB (Permanent -> admin_data)
+    # Check duplicates in sheet
+    sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+    if any(u['email'].lower() == admin.email.lower() for u in sheet_admins):
+         raise HTTPException(status_code=400, detail="Admin already registered (in Sheet)")
+
+    if append_user_to_sheet("ADMIN_SHEET_ID", 'admin', 'Admin', admin.name, admin.email, hashed_password):
+         return {"success": True, "message": "Admin Registration successful! Account saved to Google Sheet."}
+
+    # 2. OPTION B: SQLite (Ephemeral)
     conn = get_db()
     cursor = conn.cursor()
     
@@ -429,7 +442,6 @@ async def register_admin(admin: AdminRegister):
         conn.close()
         raise HTTPException(status_code=400, detail="Admin already exists")
     
-    hashed_password = get_password_hash(admin.password)
     try:
         cursor.execute(
             "INSERT INTO admins (name, email, password) VALUES (?, ?, ?)",
@@ -437,13 +449,26 @@ async def register_admin(admin: AdminRegister):
         )
         conn.commit()
         conn.close()
-        return {"success": True, "message": "Admin registered successfully"}
+        return {"success": True, "message": "Admin registered (Ephemeral). Use Sheets for permanence."}
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @app.post("/api/admin/login")
 async def login_admin(credentials: AdminLogin):
+    # 1. OPTION A: Google Sheet DB
+    sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+    admin_user = next((u for u in sheet_admins if u['email'].lower() == credentials.email.lower()), None)
+    
+    if admin_user:
+        if verify_password(credentials.password, admin_user['password']):
+             access_token = create_access_token(
+                 data={"id": "sheet_admin", "email": admin_user['email']}
+             )
+             return {"success": True, "token": access_token}
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # 2. OPTION B: SQLite Fallback
     conn = get_db()
     cursor = conn.cursor()
     

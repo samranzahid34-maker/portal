@@ -507,6 +507,26 @@ app.get('/api/env-check', (req, res) => {
     });
 });
 
+// Debug endpoint to check MongoDB URI structure
+app.get('/api/debug-mongo', (req, res) => {
+    const uri = process.env.MONGODB_URI || 'NOT SET';
+    if (uri === 'NOT SET') {
+        return res.json({ error: 'MONGODB_URI not set' });
+    }
+
+    // Mask the password for security
+    const maskedUri = uri.replace(/:([^@]+)@/, ':****@');
+
+    res.json({
+        uriLength: uri.length,
+        uriStart: uri.substring(0, 25),
+        maskedUri: maskedUri,
+        hasProtocol: uri.startsWith('mongodb+srv://'),
+        hasAtSign: uri.includes('@'),
+        hasQuestionMark: uri.includes('?')
+    });
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index-auth.html'));
 });

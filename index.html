@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal | UniMarks</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script-auth.js" defer></script>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="#" class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+                Student Portal
+            </a>
+            <div id="logoutSection" class="hidden">
+                <button id="logoutBtn" class="btn btn-secondary">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container" style="padding-top: 4rem;">
+
+        <!-- LOGIN / REGISTER CARD -->
+        <div id="authSection" class="auth-container">
+            <div class="card">
+                <div class="text-center" style="margin-bottom: 2rem;">
+                    <h1 style="color: var(--primary);">Welcome Student</h1>
+                    <p style="color: var(--text-muted);">View your official marks sheet</p>
+                </div>
+
+                <!-- TABS -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                    <button class="tab-btn" onclick="switchTab('register')">Register</button>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <div id="loginTab" class="tab-content">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Roll Number</label>
+                            <input type="text" id="loginRollNumber" required placeholder="e.g. FA-2021/BSCS/087">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="loginEmail" required placeholder="name@university.edu">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginBtn">View
+                            Result</button>
+                    </form>
+                    <div class="text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
+                        <a href="#" onclick="switchTab('register'); return false;">New user? Register here</a>
+                    </div>
+                </div>
+
+                <!-- REGISTER FORM -->
+                <div id="registerTab" class="tab-content hidden">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label>Roll Number</label>
+                            <input type="text" id="registerRollNumber" required placeholder="e.g. FA-2021/BSCS/087">
+                        </div>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="registerName" required placeholder="Full Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="registerEmail" required placeholder="name@university.edu">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;" id="registerBtn">Create
+                            Account</button>
+                    </form>
+                    <div class="text-center" style="margin-top: 1.5rem; font-size: 0.9rem;">
+                        <a href="#" onclick="switchTab('login'); return false;">Already registered? Login here</a>
+                    </div>
+                </div>
+
+                <!-- ALERTS -->
+                <div id="errorAlert" class="hidden"
+                    style="margin-top: 1rem; padding: 10px; background: #fee2e2; color: var(--danger); border-radius: 6px; text-align: center;">
+                    <span id="errorMessage"></span>
+                </div>
+                <div id="successAlert" class="hidden"
+                    style="margin-top: 1rem; padding: 10px; background: #d1fae5; color: var(--success); border-radius: 6px; text-align: center;">
+                    <span id="successMessage"></span>
+                </div>
+
+                <div
+                    style="text-align: center; margin-top: 2rem; font-size: 0.85rem; color: var(--text-muted); padding-top: 1rem; border-top: 1px solid var(--border);">
+                    Faculty Access? <a href="admin.html"
+                        style="color: var(--primary); text-decoration: none;">Instructor Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS SECTION (Confidential Transcript Look) -->
+        <div id="resultsSection" class="hidden">
+            <div class="container" style="max-width: 900px;">
+
+                <div class="transcript-header">
+                    <div>
+                        <h2 style="margin-bottom: 5px;">Official Transcript</h2>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">CONFIDENTIAL STUDENT RECORD</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 700; font-size: 1.5rem; color: var(--primary);">UniMarks Portal</div>
+                    </div>
+                </div>
+
+                <div class="transcript-body">
+                    <!-- Data Bar -->
+                    <div class="student-bar">
+                        <div
+                            style="width: 60px; height: 60px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 id="studentName" style="color: var(--primary); margin-bottom: 4px;">Student Name</h2>
+                            <div style="font-family: monospace; font-size: 1rem;">Roll No: <span id="displayRollNumber"
+                                    style="font-weight: 700; color: var(--text-main);">--</span></div>
+                        </div>
+                        <div style="margin-left: auto; text-align: right;">
+                            <div
+                                style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">
+                                Total Obtained</div>
+                            <div id="totalMarks"
+                                style="font-size: 2.5rem; font-weight: 700; color: var(--success); line-height: 1;">--
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 8px;">
+                        <table class="marks-table" id="marksTable">
+                            <thead>
+                                <!-- Will be populated by JS -->
+                            </thead>
+                            <tbody>
+                                <!-- Will be populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 2rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+                        This report is system generated. Errors and omissions excepted.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.getElementById('loginTab').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerTab').classList.toggle('hidden', tab !== 'register');
+
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs[0].classList.toggle('active', tab === 'login');
+            tabs[1].classList.toggle('active', tab === 'register');
+
+            document.getElementById('errorAlert').classList.add('hidden');
+            document.getElementById('successAlert').classList.add('hidden');
+        }
+
+        function showAlert(msg, type) {
+            const error = document.getElementById('errorAlert');
+            const success = document.getElementById('successAlert');
+            if (type === 'error') {
+                document.getElementById('errorMessage').textContent = msg;
+                error.classList.remove('hidden');
+                success.classList.add('hidden');
+            } else {
+                document.getElementById('successMessage').textContent = msg;
+                success.classList.remove('hidden');
+                error.classList.add('hidden');
+            }
+        }
+    </script>
+
+</body>
+
+</html>

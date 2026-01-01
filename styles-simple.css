@@ -1,0 +1,279 @@
+/* Professional Solid Theme - Teal & Slate */
+
+/* Global Reset & Body */
+body {
+    background-color: #f3f4f6;
+    /* Light gray background */
+    font-family: 'Inter', sans-serif;
+    color: #111827;
+}
+
+/* Card Styles */
+.glass-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+    /* Sharper corners */
+    backdrop-filter: none;
+    /* Removed glass effect */
+}
+
+/* Auth Section UI */
+.login-section {
+    padding: 2rem;
+}
+
+.login-card {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 2.5rem;
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.card-header h1 {
+    color: #0f172a;
+    /* Slate 900 */
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #64748b;
+    /* Slate 500 */
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #0f172a;
+    /* Slate 900 */
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.875rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #1e293b;
+    /* Slate 800 */
+}
+
+/* Form Inputs */
+.input-wrapper {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
+.input-wrapper input {
+    color: #0f172a;
+}
+
+.input-wrapper:focus-within {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+}
+
+.input-icon {
+    color: #64748b;
+}
+
+/* Tabs */
+.tab-buttons {
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.tab-btn {
+    color: #64748b;
+    font-weight: 600;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.tab-btn.active {
+    color: #0f172a;
+    border-bottom-color: #0f172a;
+}
+
+/* --- Results Section Styles --- */
+
+/* Student Info Header */
+.results-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.5rem 2rem;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    background-color: #0f172a;
+    /* Slate 900 */
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.student-details h2 {
+    color: #0f172a;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.student-roll {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+/* Marks Table */
+.marks-table-container {
+    padding: 2rem;
+}
+
+.section-title {
+    color: #0f172a;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #0f172a;
+    padding-left: 1rem;
+    border-bottom: none;
+    /* Removed bottom border */
+}
+
+/* Table Design */
+.marks-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+.marks-table thead th {
+    background-color: #0f172a;
+    /* Slate 900 - Header */
+    color: #ffffff;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 600;
+    border-right: 1px solid #334155;
+    white-space: nowrap;
+}
+
+.marks-table tbody td {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    color: #334155;
+    font-weight: 500;
+}
+
+.marks-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Last 2 Columns Highlight */
+.highlight-cell {
+    background-color: #f0fdf4 !important;
+    /* Light Green */
+    color: #166534 !important;
+    /* Dark Green */
+    font-weight: 700 !important;
+}
+
+.marks-table thead th:nth-last-child(1),
+.marks-table thead th:nth-last-child(2) {
+    background-color: #166534;
+    /* Dark Green Header for totals */
+}
+
+/* Summary Cards (Only Total Marks now) */
+.marks-summary {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0 2rem;
+    /* Align with table padding */
+    margin-bottom: 1rem;
+}
+
+.summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    border-radius: 8px;
+    min-width: 250px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-left: 4px solid #0f172a;
+}
+
+.summary-icon.total {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.summary-value {
+    color: #0f172a;
+    font-size: 2rem;
+}
+
+/* Logout Button */
+.btn-logout {
+    background-color: #ef4444;
+    /* Red for logout */
+    color: white;
+}
+
+.btn-logout:hover {
+    background-color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .marks-table-container {
+        padding: 1rem;
+    }
+
+    .results-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .student-info {
+        flex-direction: column;
+    }
+
+    .marks-summary {
+        justify-content: center;
+    }
+}

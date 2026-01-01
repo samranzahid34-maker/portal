@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Admin | UniMarks</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+    <!-- AUTH SECTION -->
+    <div id="authSection" class="container auth-container">
+        <div class="card">
+            <div class="text-center" style="margin-bottom: 2rem;">
+                <h1 style="color: var(--primary);">Instructor Login</h1>
+                <p style="color: var(--text-muted);">Manage Student Marks Sheets</p>
+            </div>
+
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchAuth('login')" id="tabLogin">Login</button>
+                <button class="tab-btn" onclick="switchAuth('register')" id="tabRegister">Register</button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required placeholder="admin@university.edu">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regName" required placeholder="Dr. Name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" required placeholder="admin@university.edu">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" required placeholder="Create Password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+
+            <p id="authMessage" class="text-center" style="margin-top: 1rem; color: var(--danger);"></p>
+
+            <div
+                style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <a href="/" style="color: var(--primary); text-decoration: none; font-size: 0.9rem;">
+                    &larr; Back to Student Portal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboardSection" class="hidden">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <a href="#" class="brand">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    UniMarks Admin
+                </a>
+                <div class="user-menu">
+                    <span id="userNameDisplay" style="font-weight: 500;">Instructor</span>
+                    <button onclick="logout()" class="btn btn-secondary"
+                        style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+            <!-- DEBUG TOOL -->
+            <div class="card" style="margin-bottom: 2rem; border-left: 4px solid #6b7280;">
+                <h3>🔍 Test Student Lookup</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Check if the backend can
+                    see a specific student</p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="lookupInput" placeholder="Enter exact Roll Number (e.g. FA-2021/BSCS/087)"
+                        style="max-width: 300px;">
+                    <button class="btn btn-primary" onclick="lookupStudent()">Search</button>
+                </div>
+                <div id="lookupResult" style="margin-top: 15px; font-weight: 500;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1>Data Sources</h1>
+                    <p style="color: var(--text-muted);">Manage connected Google Sheets</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="toggleAddForm()">+ Connect New Sheet</button>
+                </div>
+            </div>
+
+            <!-- Add Form (Toggleable) -->
+            <div id="addFormContainer" class="card hidden" style="border-left: 4px solid var(--primary);">
+                <h3 id="formTitle" style="margin-bottom: 1.5rem;">Connect New Sheet</h3>
+                <form id="sheetForm">
+                    <input type="hidden" id="editIndex" value="-1">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Description (Class Name)</label>
+                            <input type="text" id="descInput" required placeholder="e.g. Fall 2024 - Section A">
+                        </div>
+                        <div class="form-group">
+                            <label>Tab Name</label>
+                            <input type="text" id="nameInput" required value="Sheet1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Google Sheet Link (or ID)</label>
+                        <input type="text" id="idInput" required
+                            placeholder="https://docs.google.com/spreadsheets/d/...">
+                        <small style="color: var(--text-muted);">⚠️ Must be shared with service account email</small>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary">Save Sheet</button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleAddForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Grid -->
+            <div id="sheetGrid" class="dashboard-grid">
+                <!-- Items injected via JS -->
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; color: #9ca3af; font-size: 0.8rem;">
+                System Version: 2.5 (No Reset Button)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/admin';
+        let adminToken = localStorage.getItem('adminToken');
+        let currentUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+        let currentSheets = [];
+
+        if (adminToken) showDashboard();
+
+        // AUTH
+        function switchAuth(type) {
+            document.getElementById('loginForm').classList.toggle('hidden', type !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', type !== 'register');
+            document.getElementById('tabLogin').classList.toggle('active', type === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', type === 'register');
+            document.getElementById('authMessage').textContent = '';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            try {
+                const res = await fetch(`${API_BASE}/login`, {
+                    method: 'POST', body: JSON.stringify({ email, password }), headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('adminToken', data.token);
+                    localStorage.setItem('adminUser', JSON.stringify(data.user));
+                    adminToken = data.token;
+                    currentUser = data.user;
+                    showDashboard();
+                } else {
+                    document.getElementById('authMessage').textContent = data.error;
+                }
+            } catch (err) { document.getElementById('authMessage').textContent = 'Error connecting'; }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            try {
+                const res = await fetch(`${API_BASE}/register`, {
+                    method: 'POST', body: JSON.stringify({ name, email, password }), headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Success! Please login.');
+                    switchAuth('login');
+                } else {
+                    document.getElementById('authMessage').textContent = data.error;
+                }
+            } catch (err) { document.getElementById('authMessage').textContent = 'Error connecting'; }
+        });
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('userNameDisplay').textContent = currentUser.name || 'Instructor';
+            loadSheets();
+        }
+
+        // DASHBOARD
+        function toggleAddForm() {
+            const form = document.getElementById('addFormContainer');
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                document.getElementById('sheetForm').reset();
+                document.getElementById('editIndex').value = ''; // Empty means new
+                document.getElementById('formTitle').textContent = 'Connect New Sheet';
+            }
+        }
+
+        async function loadSheets() {
+            const grid = document.getElementById('sheetGrid');
+            grid.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE}/sheets`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+                const data = await res.json();
+
+                if (!data.success) { logout(); return; }
+
+                currentSheets = data.sources;
+                grid.innerHTML = '';
+
+                if (currentSheets.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No sheets found. Add one above.</p>';
+                }
+
+                currentSheets.forEach((sheet) => {
+                    const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheet.id}/edit`;
+
+                    // Status Logic
+                    let statusBadge = '<div style="color: #6b7280; font-size: 0.8rem; margin-top: 5px;">⚪ Status: Unknown</div>';
+                    if (sheet.status) {
+                        if (sheet.status.status === 'error') {
+                            statusBadge = `<div style="color: #ef4444; font-size: 0.8rem; margin-top: 5px; font-weight: 500;">⚠️ Error: ${sheet.status.error}</div>`;
+                        } else if (sheet.status.status === 'connected') {
+                            statusBadge = `<div style="color: #10b981; font-size: 0.8rem; margin-top: 5px; font-weight: 500;">✅ Connected (${sheet.status.count} students)</div>`;
+                        }
+                    }
+
+                    const item = document.createElement('div');
+                    item.className = 'sheet-card';
+                    item.innerHTML = `
+                    <h3>${sheet.description}</h3>
+                    <div class="sheet-meta">
+                        <div>Tab: <strong>${sheet.name}</strong></div>
+                        <div style="font-family: monospace; font-size: 0.8rem; margin-top: 4px;">ID: ${sheet.id.substring(0, 10)}...</div>
+                        ${statusBadge}
+                    </div>
+                    <div class="sheet-actions">
+                        <a href="${sheetUrl}" target="_blank" class="btn btn-primary" style="text-decoration: none; font-size: 0.9rem;">
+                            Open Sheet
+                        </a>
+                        <button class="btn btn-secondary" onclick="editSheet('${sheet._id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="removeSheet('${sheet._id}')">Remove</button>
+                    </div>
+                `;
+                    grid.appendChild(item);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function editSheet(uid) {
+            document.getElementById('addFormContainer').classList.remove('hidden');
+            const sheet = currentSheets.find(s => s._id === uid);
+            if (!sheet) return;
+
+            document.getElementById('editIndex').value = uid;
+            document.getElementById('descInput').value = sheet.description;
+            document.getElementById('idInput').value = sheet.id;
+            document.getElementById('nameInput').value = sheet.name;
+            document.getElementById('formTitle').textContent = 'Edit Sheet Connection';
+            document.getElementById('addFormContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('sheetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uid = document.getElementById('editIndex').value;
+            const isNew = !uid || uid === '-1' || uid === '';
+
+            let idVal = document.getElementById('idInput').value;
+            const match = idVal.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (match) idVal = match[1];
+
+            const payload = {
+                description: document.getElementById('descInput').value,
+                id: idVal,
+                name: document.getElementById('nameInput').value
+            };
+
+            const url = isNew ? `${API_BASE}/sheets` : `${API_BASE}/sheets/${uid}`;
+            const method = isNew ? 'POST' : 'PUT';
+
+            const res = await fetch(url, {
+                method, body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` }
+            });
+
+            if (res.ok) {
+                toggleAddForm();
+                loadSheets();
+            } else {
+                const d = await res.json();
+                alert('Failed: ' + (d.error || 'Server error'));
+            }
+        });
+
+        async function removeSheet(uid) {
+            if (!confirm('Remove this sheet?')) return;
+            await fetch(`${API_BASE}/sheets/${uid}`, {
+                method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            loadSheets();
+        }
+
+        async function lookupStudent() {
+            const rollNo = document.getElementById('lookupInput').value;
+            const resDiv = document.getElementById('lookupResult');
+            resDiv.innerHTML = 'Searching...';
+
+            try {
+                const res = await fetch(`${API_BASE}/lookup-student`, {
+                    method: 'POST',
+                    body: JSON.stringify({ rollNo }),
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+
+                if (data.found) {
+                    resDiv.innerHTML = `<span style="color:green">✅ Found: ${data.student.name} (Source: ${data.student.source})</span>`;
+                } else {
+                    resDiv.innerHTML = `<span style="color:red">❌ Not Found. The server cannot see this Roll No. Check Sheet Status above.</span>`;
+                }
+            } catch (err) {
+                resDiv.innerHTML = 'Error searching.';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

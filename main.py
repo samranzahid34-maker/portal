@@ -400,16 +400,22 @@ async def add_source(source: AddSource):
         conn.close()
         raise HTTPException(status_code=500, detail=f"Failed to add source: {str(e)}")
 
-# Serve static files
-app.mount("/public", StaticFiles(directory="public"), name="public")
+# Serve static files with absolute path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+public_path = os.path.join(current_dir, "public")
+
+if os.path.exists(public_path):
+    app.mount("/public", StaticFiles(directory=public_path), name="public")
+else:
+    print(f"Warning: Public directory not found at {public_path}")
 
 @app.get("/")
 async def read_root():
-    return FileResponse("public/index-auth.html")
+    return FileResponse(os.path.join(public_path, "index-auth.html"))
 
 @app.get("/admin.html")
 async def read_admin():
-    return FileResponse("public/admin.html")
+    return FileResponse(os.path.join(public_path, "admin.html"))
 
 if __name__ == "__main__":
     import uvicorn

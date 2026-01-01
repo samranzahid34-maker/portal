@@ -471,6 +471,19 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Diagnostic endpoint to check environment variables (safe version)
+app.get('/api/env-check', (req, res) => {
+    res.json({
+        MONGODB_URI_exists: !!process.env.MONGODB_URI,
+        MONGODB_URI_length: process.env.MONGODB_URI ? process.env.MONGODB_URI.length : 0,
+        MONGODB_URI_starts_with: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'NOT SET',
+        JWT_SECRET_exists: !!process.env.JWT_SECRET,
+        GOOGLE_CREDENTIALS_JSON_exists: !!process.env.GOOGLE_CREDENTIALS_JSON,
+        GOOGLE_CREDENTIALS_JSON_length: process.env.GOOGLE_CREDENTIALS_JSON ? process.env.GOOGLE_CREDENTIALS_JSON.length : 0,
+        NODE_ENV: process.env.NODE_ENV || 'not set'
+    });
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index-auth.html'));
 });

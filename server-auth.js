@@ -344,7 +344,7 @@ app.post('/api/register', async (req, res) => {
         // Check if student exists in DB
         const existingReg = await findRegistration(userNormalizedRollVal);
 
-        if (existingReg) {
+        if (existingReg && existingReg.password) {
             return res.status(409).json({ success: false, error: 'This roll number is already registered. Please login instead.' });
         }
 
@@ -393,6 +393,11 @@ app.post('/api/login', async (req, res) => {
         // Check roll and email
         if (registration.email !== normalizedEmail) {
             return res.status(401).json({ success: false, error: 'Invalid roll number or email combination.' });
+        }
+
+        // Check for legacy user (no password)
+        if (!registration.password) {
+            return res.status(401).json({ success: false, error: 'Account update required. Please Register again to set a password.', needsRegistration: true });
         }
 
         // Check password

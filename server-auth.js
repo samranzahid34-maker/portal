@@ -56,11 +56,16 @@ const SourceModel = mongoose.model('Source', SourceSchema);
 async function connectDB() {
     if (process.env.MONGODB_URI) {
         try {
+            console.log('Attempting to connect to MongoDB...');
+            console.log('URI starts with:', process.env.MONGODB_URI.substring(0, 30));
             await mongoose.connect(process.env.MONGODB_URI);
             isMongoConnected = true;
-            console.log('✓ Connected to MongoDB');
+            console.log('✓ Connected to MongoDB successfully');
         } catch (err) {
-            console.error('✗ MongoDB Connection Error:', err.message);
+            console.error('✗ MongoDB Connection Error:');
+            console.error('Error message:', err.message);
+            console.error('Error name:', err.name);
+            console.error('Full error:', JSON.stringify(err, null, 2));
             // We do not fallback to file system anymore. Fatal error if DB essential.
         }
     } else {

@@ -1,219 +1,397 @@
-// Node.js Server for Student Marks Portal with Google Drive Integration
 const express = require('express');
 const cors = require('cors');
-const { google } = require('googleapis');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const { google } = require('googleapis');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Google Sheets Configuration
-const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID;
-const SHEET_NAME = process.env.SHEET_NAME || 'Sheet1';
+// MongoDB Connection
+let isMongoConnected = false;
 
-// Initialize Google Sheets API
-let sheetsAPI = null;
+async function connectDB() {
+    if (!process.env.MONGODB_URI) {
+        console.error('✗ MONGODB_URI not set in environment variables');
+        return;
+    }
+
+    try {
+        console.log('Attempting to connect to MongoDB...');
+        await mongoose.connect(process.env.MONGODB_URI);
+        isMongoConnected = true;
+        console.log('✓ Connected to MongoDB successfully');
+    } catch (err) {
+        console.error('✗ MongoDB Connection Error:', err.message);
+        isMongoConnected = false;
+    }
+}
+
+// MongoDB Schemas
+const StudentSchema = new mongoose.Schema({
+    rollNumber: { type: String, required: true, unique: true },
+    name: String,
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const AdminSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const SourceSchema = new mongoose.Schema({
+    sheetId: { type: String, required: true },
+    range: { type: String, default: 'Sheet1!A2:Z' },
+    addedAt: { type: Date, default: Date.now }
+});
+
+const Student = mongoose.model('Student', StudentSchema);
+const Admin = mongoose.model('Admin', AdminSchema);
+const Source = mongoose.model('Source', SourceSchema);
+
+// Google Sheets setup
+let sheetsClient = null;
+let studentCache = [];
 
 async function initializeGoogleSheets() {
     try {
-        // Authentication using Service Account
+        if (!process.env.GOOGLE_CREDENTIALS_JSON) {
+            console.log('⚠ Google Sheets credentials not configured');
+            return false;
+        }
+
+        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
         const auth = new google.auth.GoogleAuth({
-            keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE || 'credentials.json',
+            credentials,
             scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
         });
 
-        const authClient = await auth.getClient();
-        sheetsAPI = google.sheets({ version: 'v4', auth: authClient });
-
-        console.log('✓ Google Sheets API initialized successfully');
+        sheetsClient = google.sheets({ version: 'v4', auth });
+        console.log('✓ Google Sheets initialized');
         return true;
     } catch (error) {
-        console.error('✗ Failed to initialize Google Sheets API:', error.message);
+        console.error('✗ Google Sheets initialization failed:', error.message);
         return false;
     }
 }
 
-// Parse student data from sheet rows
-function parseStudentData(rows) {
-    if (!rows || rows.length < 2) {
+async function fetchStudentsFromSheets() {
+    if (!sheetsClient) {
+        console.log('Google Sheets not initialized');
         return [];
     }
 
-    const headers = rows[0]; // First row contains headers
-    const students = [];
+    try {
+        const sources = await Source.find();
+        const allStudents = [];
 
-    // Expected format:
-    // RollNo | Name | Subject1 | Subject2 | ... | SubjectN
-    // CS001  | Alice | 85      | 78       | ... | 88
+        for (const source of sources) {
+            try {
+                const response = await sheetsClient.spreadsheets.values.get({
+                    spreadsheetId: source.sheetId,
+                    range: source.range,
+                });
 
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-
-        if (!row || row.length < 3) continue; // Skip invalid rows
-
-        const student = {
-            rollNo: row[0]?.toString().trim(),
-            name: row[1]?.toString().trim(),
-            subjects: []
-        };
-
-        // Parse subjects (starting from column 2)
-        for (let j = 2; j < headers.length; j++) {
-            const subjectName = headers[j]?.toString().trim();
-            const marks = row[j]?.toString().trim();
-
-            if (subjectName && marks) {
-                // Support format: "85/100" or just "85"
-                let obtained, total;
-
-                if (marks.includes('/')) {
-                    [obtained, total] = marks.split('/').map(m => parseInt(m.trim()));
-                } else {
-                    obtained = parseInt(marks);
-                    total = 100; // Default total
-                }
-
-                if (!isNaN(obtained) && !isNaN(total)) {
-                    student.subjects.push({
-                        name: subjectName,
-                        obtained,
-                        total
-                    });
-                }
+                const rows = response.data.values || [];
+                rows.forEach(row => {
+                    if (row[0]) {
+                        allStudents.push({
+                            rollNumber: row[0],
+                            name: row[1] || '',
+                            marks: row.slice(2)
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error(`Error fetching from sheet ${source.sheetId}:`, error.message);
             }
         }
 
-        if (student.rollNo && student.name && student.subjects.length > 0) {
-            students.push(student);
-        }
-    }
-
-    return students;
-}
-
-// Fetch all students data from Google Sheets
-async function fetchAllStudentsData() {
-    try {
-        if (!sheetsAPI) {
-            throw new Error('Google Sheets API not initialized');
-        }
-
-        const response = await sheetsAPI.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_NAME}!A:Z`, // Adjust range as needed
-        });
-
-        const rows = response.data.values;
-        return parseStudentData(rows);
+        studentCache = allStudents;
+        console.log(`✓ Cached ${allStudents.length} students from Google Sheets`);
+        return allStudents;
     } catch (error) {
-        console.error('Error fetching data from Google Sheets:', error.message);
-        throw error;
+        console.error('Error fetching students:', error);
+        return [];
     }
 }
 
-// In-memory cache
-let studentsCache = null;
-let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// API Routes
 
-// API Endpoint: Get student marks by roll number
-app.get('/api/student/:rollNo', async (req, res) => {
-    try {
-        const rollNo = req.params.rollNo.toUpperCase().trim();
-
-        if (!rollNo) {
-            return res.status(400).json({
-                success: false,
-                error: 'Roll number is required'
-            });
-        }
-
-        // Check cache
-        if (!studentsCache || !cacheTimestamp || (Date.now() - cacheTimestamp > CACHE_DURATION)) {
-            console.log('Refreshing cache from Google Sheets...');
-            studentsCache = await fetchAllStudentsData();
-            cacheTimestamp = Date.now();
-            console.log(`Cached ${studentsCache.length} students`);
-        }
-
-        // Find student
-        const student = studentsCache.find(s => s.rollNo.toUpperCase() === rollNo);
-
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                error: 'Student not found'
-            });
-        }
-
-        // Return only requested student's data (security measure)
-        res.json({
-            success: true,
-            student: {
-                rollNo: student.rollNo,
-                name: student.name,
-                subjects: student.subjects
-            }
-        });
-
-    } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Internal server error'
-        });
-    }
-});
-
-// API Endpoint: Health check
+// Health check
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
         status: 'Server is running',
-        sheetsConnected: sheetsAPI !== null,
-        cachedStudents: studentsCache ? studentsCache.length : 0
+        dbConnected: isMongoConnected,
+        sheetsConnected: sheetsClient !== null,
+        cachedStudents: studentCache.length
     });
 });
 
-// Serve index.html for root route
+// Student registration
+app.post('/api/register', async (req, res) => {
+    try {
+        const { rollNumber, name, email, password } = req.body;
+
+        if (!rollNumber || !email || !password) {
+            return res.status(400).json({ success: false, error: 'All fields are required' });
+        }
+
+        if (!isMongoConnected) {
+            return res.status(500).json({ success: false, error: 'Database not connected' });
+        }
+
+        // Check if roll number exists in cache
+        const studentExists = studentCache.find(s => s.rollNumber === rollNumber);
+        if (!studentExists) {
+            return res.status(400).json({ success: false, error: 'Invalid roll number. Please check your roll number and try again.' });
+        }
+
+        // Check if already registered
+        const existing = await Student.findOne({ rollNumber });
+        if (existing) {
+            return res.status(400).json({ success: false, error: 'Student already registered' });
+        }
+
+        // Hash password and save
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const student = new Student({
+            rollNumber,
+            name: name || studentExists.name,
+            email,
+            password: hashedPassword
+        });
+
+        await student.save();
+
+        res.json({ success: true, message: 'Registration successful! You can now login.' });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ success: false, error: 'Registration failed' });
+    }
+});
+
+// Student login
+app.post('/api/login', async (req, res) => {
+    try {
+        const { rollNumber, email, password } = req.body;
+
+        if (!rollNumber || !email || !password) {
+            return res.status(400).json({ success: false, error: 'All fields are required' });
+        }
+
+        if (!isMongoConnected) {
+            return res.status(500).json({ success: false, error: 'Database not connected' });
+        }
+
+        const student = await Student.findOne({ rollNumber, email });
+
+        if (!student) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, student.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({ rollNumber, email }, JWT_SECRET, { expiresIn: '24h' });
+
+        res.json({
+            success: true,
+            token,
+            student: {
+                rollNumber: student.rollNumber,
+                name: student.name,
+                email: student.email
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ success: false, error: 'Login failed' });
+    }
+});
+
+// Get student marks
+app.get('/api/marks/:rollNumber', async (req, res) => {
+    try {
+        const { rollNumber } = req.params;
+        const student = studentCache.find(s => s.rollNumber === rollNumber);
+
+        if (!student) {
+            return res.status(404).json({ success: false, error: 'Student not found' });
+        }
+
+        res.json({
+            success: true,
+            student: {
+                rollNumber: student.rollNumber,
+                name: student.name,
+                marks: student.marks
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching marks:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch marks' });
+    }
+});
+
+// Admin routes
+app.post('/api/admin/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ success: false, error: 'All fields are required' });
+        }
+
+        if (!isMongoConnected) {
+            return res.status(500).json({ success: false, error: 'Database not connected' });
+        }
+
+        const existing = await Admin.findOne({ email });
+        if (existing) {
+            return res.status(400).json({ success: false, error: 'Admin already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const admin = new Admin({
+            name,
+            email,
+            password: hashedPassword
+        });
+
+        await admin.save();
+
+        res.json({ success: true, message: 'Admin registered successfully' });
+    } catch (error) {
+        console.error('Admin registration error:', error);
+        res.status(500).json({ success: false, error: 'Registration failed' });
+    }
+});
+
+app.post('/api/admin/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ success: false, error: 'Email and password required' });
+        }
+
+        if (!isMongoConnected) {
+            return res.status(500).json({ success: false, error: 'Database not connected' });
+        }
+
+        const admin = await Admin.findOne({ email });
+
+        if (!admin) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, admin.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({ id: admin._id, email: admin.email }, JWT_SECRET, { expiresIn: '24h' });
+
+        res.json({
+            success: true,
+            token,
+            admin: {
+                id: admin._id,
+                name: admin.name,
+                email: admin.email
+            }
+        });
+    } catch (error) {
+        console.error('Admin login error:', error);
+        res.status(500).json({ success: false, error: 'Login failed' });
+    }
+});
+
+// Add Google Sheet source
+app.post('/api/admin/add-source', async (req, res) => {
+    try {
+        const { sheetId, range } = req.body;
+
+        if (!sheetId) {
+            return res.status(400).json({ success: false, error: 'Sheet ID required' });
+        }
+
+        if (!isMongoConnected) {
+            return res.status(500).json({ success: false, error: 'Database not connected' });
+        }
+
+        const source = new Source({
+            sheetId,
+            range: range || 'Sheet1!A2:Z'
+        });
+
+        await source.save();
+
+        // Refresh student cache
+        await fetchStudentsFromSheets();
+
+        res.json({ success: true, message: 'Source added successfully' });
+    } catch (error) {
+        console.error('Error adding source:', error);
+        res.status(500).json({ success: false, error: 'Failed to add source' });
+    }
+});
+
+// Serve frontend
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index-auth.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // Start server
 async function startServer() {
-    // Initialize Google Sheets API
-    const sheetsInitialized = await initializeGoogleSheets();
+    await connectDB();
+    await initializeGoogleSheets();
 
-    if (!sheetsInitialized) {
-        console.warn('⚠ Warning: Server will start but Google Sheets integration is not available');
-        console.warn('⚠ Make sure to set up credentials.json and environment variables');
+    if (isMongoConnected) {
+        await fetchStudentsFromSheets();
     }
 
     app.listen(PORT, () => {
-        console.log('='.repeat(50));
-        console.log(`🚀 Student Marks Portal Server`);
+        console.log('='.repeat(60));
+        console.log(`🚀 Student Marks Portal`);
         console.log(`📡 Server running on http://localhost:${PORT}`);
-        console.log(`📊 Google Sheets: ${sheetsInitialized ? 'Connected' : 'Not Connected'}`);
-        console.log('='.repeat(50));
+        console.log(`💾 Database: ${isMongoConnected ? 'MongoDB Connected' : 'MongoDB DISCONNECTED'}`);
+        console.log(`📊 Cached Students: ${studentCache.length}`);
+        console.log('='.repeat(60));
     });
 }
 
-// Error handling
-process.on('unhandledRejection', (error) => {
-    console.error('Unhandled rejection:', error);
+// Initialize for Vercel serverless
+connectDB();
+initializeGoogleSheets().then(success => {
+    if (success && isMongoConnected) {
+        fetchStudentsFromSheets();
+    }
 });
 
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught exception:', error);
-    process.exit(1);
-});
+if (require.main === module) {
+    startServer();
+}
 
-// Start the server
-startServer();
+module.exports = app;

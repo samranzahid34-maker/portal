@@ -73,9 +73,34 @@ def init_db():
             )
         ''')
         
+        # Initialize Default Admin if Env Vars set (Persistence for Vercel)
+        admin_email = os.getenv("ADMIN_EMAIL")
+        admin_pass = os.getenv("ADMIN_PASSWORD")
+        if admin_email and admin_pass:
+            cursor.execute("SELECT * FROM admins WHERE email = ?", (admin_email,))
+            if not cursor.fetchone():
+                try:
+                    # Late binding call to get_password_hash (defined below) is passing here because 
+                    # init_db is called in lifespan, after module load.
+                    hashed = get_password_hash(admin_pass)
+                    cursor.execute("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)", 
+                                   ("Admin", admin_email, hashed))
+                    print("✓ Default Admin initialized from Env")
+                except Exception as e:
+                    print(f"Auth Init skipped: {e}")
+
+        # Initialize Default Sheet if Env Vars set
+        default_sheet = os.getenv("DEFAULT_SHEET_ID")
+        if default_sheet:
+            cursor.execute("SELECT * FROM sources WHERE sheet_id = ?", (default_sheet,))
+            if not cursor.fetchone():
+                cursor.execute("INSERT INTO sources (sheet_id, range) VALUES (?, ?)", 
+                               (default_sheet, "Sheet1!A2:Z"))
+                print("✓ Default Sheet initialized from Env")
+
         conn.commit()
         conn.close()
-        print("✓ Database initialized")
+        print("✓ Database initialized with defaults")
     except Exception as e:
         print(f"DB Init Error: {e}")
 

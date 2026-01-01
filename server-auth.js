@@ -28,6 +28,7 @@ const RegistrationSchema = new mongoose.Schema({
     rollNo: String,
     name: String,
     email: String,
+    password: String, // Added password field
     registeredAt: Date
 });
 

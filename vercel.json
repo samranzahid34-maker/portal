@@ -2,17 +2,22 @@
     "version": 2,
     "builds": [
         {
-            "src": "server-auth.js",
-            "use": "@vercel/node",
-            "config": {
-                "includeFiles": ["public/**"]
-            }
+            "src": "server-simple.js",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "public/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
+            "src": "/api/(.*)",
+            "dest": "/server-simple.js"
+        },
+        {
             "src": "/(.*)",
-            "dest": "/server-auth.js"
+            "dest": "/server-simple.js"
         }
     ]
 }

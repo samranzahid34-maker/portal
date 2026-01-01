@@ -66,7 +66,8 @@
 
     <div class="admin-layout" id="admin-panel" style="display:none">
         <aside class="sidebar">
-            <a href="#" class="sidebar-link active">Manage Data Sources</a>
+            <a href="#" class="sidebar-link active" onclick="switchTab('sources', this)">Manage Data Sources</a>
+            <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
             <button onclick="refreshData()" class="btn-primary"
                 style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem">↻ Refresh Data</button>
             <div style="margin:1rem; font-size:0.8rem; color:#64748b">
@@ -76,26 +77,44 @@
         </aside>
 
         <main class="main-content">
-            <h2>Google Sheets Sources</h2>
-            <p style="color:#64748b">Add Google Sheets IDs to fetch marks from.</p>
+            <!-- TAB 1: SOURCES -->
+            <div id="tab-sources">
+                <h2>Google Sheets Sources</h2>
+                <p style="color:#64748b">Add Google Sheets IDs to fetch marks from.</p>
 
-            <div class="card" style="max-width: 600px; margin: 1rem 0;">
-                <form onsubmit="addSource(event)">
-                    <div class="input-group">
-                        <label>Spreadsheet ID</label>
-                        <input type="text" id="sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                            required>
-                    </div>
-                    <div class="input-group">
-                        <label>Range (Optional)</label>
-                        <input type="text" id="sheet-range" value="Sheet1!A2:Z">
-                    </div>
-                    <button class="btn-primary">Add Source</button>
-                </form>
-            </div>
+                <div class="card" style="max-width: 600px; margin: 1rem 0;">
+                    <form onsubmit="addSource(event)">
+                        <div class="input-group">
+                            <label>Spreadsheet ID</label>
+                            <input type="text" id="sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                                required>
+                        </div>
+                        <div class="input-group">
+                            <label>Range (Optional)</label>
+                            <input type="text" id="sheet-range" value="Sheet1!A2:Z">
+                        </div>
+                        <button class="btn-primary">Add Source</button>
+                    </form>
+                </div>
 
-            <div class="source-list" id="source-list">
-                <!-- Sources will be listed here -->
+                <div class="source-list" id="source-list">
+                    <!-- Sources will be listed here -->
+                </div>
+            </div> <!-- End Tab Sources -->
+
+            <!-- TAB 2: RESULTS -->
+            <div id="tab-results" style="display:none">
+                <h2>Check Student Result</h2>
+                <div class="card" style="max-width: 600px; margin: 1rem 0;">
+                    <form onsubmit="searchStudent(event)">
+                        <div class="input-group">
+                            <label>Student Roll Number</label>
+                            <input type="text" id="search-roll" placeholder="e.g. Fa-2024/BS CMAI/111" required>
+                        </div>
+                        <button class="btn-primary">Search</button>
+                    </form>
+                </div>
+                <div id="result-display" style="margin-top: 2rem;"></div>
             </div>
         </main>
     </div>
@@ -284,6 +303,58 @@
                     document.getElementById('source-list').innerHTML = '<div style="padding:1rem">No configurations found</div>';
                 }
             } catch (e) { console.error("Failed to load sources"); }
+        }
+
+        async function searchStudent(e) {
+            e.preventDefault();
+            const roll = document.getElementById('search-roll').value;
+            const display = document.getElementById('result-display');
+            display.innerHTML = '<p>Searching...</p>';
+
+            try {
+                const res = await fetch(`/api/marks/${encodeURIComponent(roll)}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    let marksHtml = '';
+                    for (const [key, value] of Object.entries(data.marks)) {
+                        if (key !== 'rollNumber' && key !== 'name') {
+                            const valDisplay = (key === 'Total') ? `${value} / 100` : value;
+                            marksHtml += `
+                                <div style="display:flex; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid #eee">
+                                    <span style="color:#64748b">${key}</span>
+                                    <span style="font-weight:600">${valDisplay}</span>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    display.innerHTML = `
+                        <div class="card" style="animation: slideUp 0.3s ease">
+                            <h3 style="margin-bottom:1rem; color:var(--primary)">${data.marks.name || 'Student'}</h3>
+                            <div style="margin-bottom:1.5rem; color:#64748b; font-size:0.9rem">
+                                Roll No: ${data.marks.rollNumber}
+                            </div>
+                            ${marksHtml}
+                        </div>
+                    `;
+                } else {
+                    display.innerHTML = `<div style="padding:1rem; color:red; background:#fff; border-radius:8px">Student not found</div>`;
+                }
+            } catch (e) {
+                display.innerHTML = `<p style="color:red">Error fetching result</p>`;
+            }
+        }
+
+        function switchTab(tabName, linkElement) {
+            document.getElementById('tab-sources').style.display = tabName === 'sources' ? 'block' : 'none';
+            document.getElementById('tab-results').style.display = tabName === 'results' ? 'block' : 'none';
+
+            // Update Sidebar Active State
+            if (linkElement) {
+                document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                linkElement.classList.add('active');
+            }
         }
 
         checkAuth();

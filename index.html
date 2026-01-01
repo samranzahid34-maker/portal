@@ -182,9 +182,10 @@
                         Object.entries(s.marks).forEach(([key, value]) => {
                             const card = document.createElement('div');
                             card.className = 'mark-card';
+                            const displayValue = (key === 'Total') ? `${value} / 100` : (value || '-');
                             card.innerHTML = `
                                 <div class="mark-label">${key}</div>
-                                <div class="mark-value">${value || '-'}</div>
+                                <div class="mark-value">${displayValue}</div>
                             `;
                             container.appendChild(card);
                         });

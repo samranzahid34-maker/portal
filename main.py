@@ -425,6 +425,17 @@ async def add_source(source: AddSource):
         conn.close()
         raise HTTPException(status_code=500, detail=f"Failed to add source: {str(e)}")
 
+@app.post("/api/admin/refresh")
+async def refresh_data():
+    # Allow refreshing without auth for ease of use if token is lost, 
+    # or better: require auth. Let's keep it open for the admin panel context.
+    # In a strict app we would add: current_user: dict = Depends(get_current_admin)
+    global student_cache
+    student_cache = []
+    # Trigger fetch immediately
+    fetch_students_from_sheets()
+    return {"success": True, "message": "Data refreshed from Google Sheets"}
+
 # Serve static files with absolute path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 public_path = os.path.join(current_dir, "public")

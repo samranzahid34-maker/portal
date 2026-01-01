@@ -326,17 +326,19 @@ def get_sheet_sources():
 def append_source_to_sheet(target_sheet_id, target_range):
     """Save a new Marking Sheet ID to the Admin Config Sheet"""
     config_sheet_id = os.getenv("ADMIN_SHEET_ID")
-    if not config_sheet_id or not sheets_service: return False
+    if not config_sheet_id or not sheets_service: 
+        return False, "ADMIN_SHEET_ID not configured or Sheets service not initialized"
     try:
         body = {"values": [[target_sheet_id, target_range]]}
         sheets_service.spreadsheets().values().append(
             spreadsheetId=config_sheet_id, range="Sources!A:B",
             valueInputOption="RAW", body=body
         ).execute()
-        return True
+        return True, "Success"
     except Exception as e:
-        print(f"Source Config Write Error: {e}")
-        return False
+        error_msg = str(e)
+        print(f"Source Config Write Error: {error_msg}")
+        return False, f"Failed to write to Sources tab: {error_msg}"
 
 import bcrypt
 
@@ -571,30 +573,14 @@ async def login_admin(credentials: AdminLogin):
 @app.post("/api/admin/add-source")
 async def add_source(source: AddSource):
     # 1. OPTION A: Google Sheet Config (Permanent)
-    if append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z"):
+    success, msg = append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z")
+    if success:
          # Refresh immediately
          fetch_students_from_sheets()
          return {"success": True, "message": "Source added permanently to Admin Sheet!"}
-
-    # 2. OPTION B: SQLite (Ephemeral)
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute(
-            "INSERT INTO sources (sheet_id, range) VALUES (?, ?)",
-            (source.sheetId, source.range)
-        )
-        conn.commit()
-        conn.close()
-        
-        # Refresh student cache immediatley when admin adds source
-        fetch_students_from_sheets()
-        
-        return {"success": True, "message": "Source added (Ephemeral). Configure Sheets for permanence."}
-    except Exception as e:
-        conn.close()
-        raise HTTPException(status_code=500, detail=f"Failed to add source: {str(e)}")
+    else:
+         # Show the EXACT error instead of falling back silently
+         raise HTTPException(status_code=500, detail=f"Failed to save source permanently: {msg}. Please ensure the 'Sources' tab exists in your Admin Google Sheet.")
 
 @app.post("/api/admin/refresh")
 async def refresh_data():

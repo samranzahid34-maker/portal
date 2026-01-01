@@ -20,7 +20,14 @@ load_dotenv()
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
-DATABASE_PATH = "portal.db"
+
+# Database path configuration for Vercel (read-only filesystem)
+if os.path.exists("/tmp"):
+    DATABASE_PATH = "/tmp/portal.db"
+    print(f"Using temporary database at {DATABASE_PATH}")
+else:
+    DATABASE_PATH = "portal.db"
+    print(f"Using local database at {DATABASE_PATH}")
 
 # Initialize FastAPI
 app = FastAPI(title="Student Marks Portal")

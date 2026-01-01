@@ -214,9 +214,15 @@
 
         async function addSource(e) {
             e.preventDefault();
-            const sheetId = document.getElementById('sheet-id').value;
+            let sheetId = document.getElementById('sheet-id').value.trim();
             const range = document.getElementById('sheet-range').value;
             const token = localStorage.getItem('adminToken');
+
+            // Auto-extract ID if full URL pasted
+            const urlMatch = sheetId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            if (urlMatch) {
+                sheetId = urlMatch[1];
+            }
 
             try {
                 const res = await fetch(`${API_URL}/add-source`, {
@@ -233,7 +239,7 @@
                     document.getElementById('sheet-id').value = '';
                     loadSources();
                 } else {
-                    alert('Failed to add source');
+                    alert('Failed to add source: ' + (data.detail || data.message || 'Unknown error'));
                 }
             } catch (e) { alert('Error adding source'); }
         }
@@ -293,7 +299,12 @@
                     list.innerHTML = data.sources.map(s => `
                         <div class="source-item">
                             <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;">
-                                <strong>${s.sheetId}</strong>
+                                <strong>
+                                    <a href="https://docs.google.com/spreadsheets/d/${s.sheetId}" target="_blank" 
+                                       style="color:var(--primary); text-decoration:none; display:flex; align-items:center; gap:5px">
+                                       📄 ${s.sheetId} <span style="font-size:0.8rem">↗</span>
+                                    </a>
+                                </strong>
                                 <br><small style="color: #64748b">${s.range}</small>
                             </div>
                             <div style="color: #10b981; font-size: 0.9rem; font-weight: 500;">● Active</div>

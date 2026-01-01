@@ -288,17 +288,19 @@ def get_sheet_users(env_var_name="STUDENT_SHEET_ID"):
 
 def append_user_to_sheet(env_var_name, role, roll, name, email, hashed_password):
     sheet_id = os.getenv(env_var_name)
-    if not sheet_id or not sheets_service: return False
+    if not sheet_id or not sheets_service: 
+        return False, f"Missing Sheet ID ({env_var_name}) or Service not initialized"
     try:
         body = {"values": [[role, roll, name, email, hashed_password]]}
         sheets_service.spreadsheets().values().append(
             spreadsheetId=sheet_id, range="Sheet1!A:E",
             valueInputOption="RAW", body=body
         ).execute()
-        return True
+        return True, "Success"
     except Exception as e:
-        print(f"Sheet Append Error ({env_var_name}): {e}")
-        return False
+        error_msg = str(e)
+        print(f"Sheet Append Error ({env_var_name}): {error_msg}")
+        return False, f"Google Sheet Error: {error_msg}"
 
 def get_sheet_sources():
     """Fetch list of Marking Sheets from the Admin Config Sheet"""
@@ -384,8 +386,11 @@ async def register_student(student: StudentRegister):
     if any(u['rollNumber'] == student.rollNumber for u in sheet_users):
          raise HTTPException(status_code=400, detail="Student already registered (in Sheet)")
 
-    if append_user_to_sheet("STUDENT_SHEET_ID", 'student', student.rollNumber, student.name, student.email, hashed_password):
+    success, msg = append_user_to_sheet("STUDENT_SHEET_ID", 'student', student.rollNumber, student.name, student.email, hashed_password)
+    if success:
          return {"success": True, "message": "Registration successful! Account saved to Google Sheet."}
+    else:
+         raise HTTPException(status_code=500, detail=f"Failed to save to Student Sheet: {msg}")
 
     # 2. OPTION B: SQLite (Fallback / Ephemeral)
     conn = get_db()
@@ -485,8 +490,13 @@ async def register_admin(admin: AdminRegister):
     if any(u['email'].lower() == admin.email.lower() for u in sheet_admins):
          raise HTTPException(status_code=400, detail="Admin already registered (in Sheet)")
 
-    if append_user_to_sheet("ADMIN_SHEET_ID", 'admin', 'Admin', admin.name, admin.email, hashed_password):
+    success, msg = append_user_to_sheet("ADMIN_SHEET_ID", 'admin', 'Admin', admin.name, admin.email, hashed_password)
+    if success:
          return {"success": True, "message": "Admin Registration successful! Account saved to Google Sheet."}
+    else:
+         # If sheet write fails, we MUST tell the user why (Permissions? Tab Name?)
+         # Do not fallback silently, as user expects permanence.
+         raise HTTPException(status_code=500, detail=f"Failed to save to Admin Sheet: {msg}")
 
     # 2. OPTION B: SQLite (Ephemeral)
     conn = get_db()

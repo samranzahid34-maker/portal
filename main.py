@@ -492,6 +492,11 @@ async def register_admin(admin: AdminRegister):
     # 1. OPTION A: Google Sheets DB (Permanent -> admin_data)
     # Check duplicates in sheet
     sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+    
+    # STRICT SECURITY: Only 1 Admin Allowed
+    if len(sheet_admins) > 0:
+        raise HTTPException(status_code=403, detail="Registration Closed. Only one Admin account is allowed.")
+
     if any(u['email'].lower() == admin.email.lower() for u in sheet_admins):
          raise HTTPException(status_code=400, detail="Admin already registered (in Sheet)")
 

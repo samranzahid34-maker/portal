@@ -4,6 +4,14 @@
         {
             "src": "main.py",
             "use": "@vercel/python"
+        },
+        {
+            "src": "*.html",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "*.css",
+            "use": "@vercel/static"
         }
     ],
     "routes": [

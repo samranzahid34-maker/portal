@@ -15,6 +15,7 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 
 load_dotenv()
+from contextlib import asynccontextmanager
 
 # Configuration
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
@@ -29,8 +30,19 @@ else:
     DATABASE_PATH = "portal.db"
     print(f"Using local database at {DATABASE_PATH}")
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize DB and Google Sheets
+    try:
+        init_db()
+        initialize_google_sheets()
+        fetch_students_from_sheets()
+    except Exception as e:
+        print(f"Startup error: {e}")
+    yield
+
 # Initialize FastAPI
-app = FastAPI(title="Student Marks Portal")
+app = FastAPI(title="Student Marks Portal", lifespan=lifespan)
 
 # CORS middleware
 app.add_middleware(
@@ -182,9 +194,7 @@ def fetch_students_from_sheets():
         print(f"Error fetching students: {e}")
         return []
 
-# Initialize Google Sheets on startup
-initialize_google_sheets()
-fetch_students_from_sheets()
+
 
 # Helper functions
 def get_db():

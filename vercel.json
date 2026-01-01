@@ -12,16 +12,8 @@
             "dest": "main.py"
         },
         {
-            "src": "/public/(.*)",
-            "dest": "/public/$1"
-        },
-        {
-            "src": "/",
-            "dest": "/public/index-auth.html"
-        },
-        {
-            "src": "/admin.html",
-            "dest": "/public/admin.html"
+            "src": "/(.*)",
+            "dest": "/$1"
         }
     ]
 }

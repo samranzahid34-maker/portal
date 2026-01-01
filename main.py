@@ -115,7 +115,7 @@ def initialize_google_sheets():
         credentials_dict = json.loads(credentials_json)
         credentials = service_account.Credentials.from_service_account_info(
             credentials_dict,
-            scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
+            scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
         
         sheets_service = build('sheets', 'v4', credentials=credentials)
@@ -243,6 +243,44 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Google Sheets User DB Helpers
+def get_sheet_users():
+    sheet_id = os.getenv("DEFAULT_SHEET_ID")
+    if not sheet_id or not sheets_service: return []
+    try:
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range="Users!A:E"
+        ).execute()
+        rows = result.get('values', [])
+        users = []
+        for row in rows[1:]: # Skip header
+             if len(row) >= 5:
+                 users.append({
+                     "role": row[0], # student/admin
+                     "rollNumber": row[1],
+                     "name": row[2],
+                     "email": row[3],
+                     "password": row[4]
+                 })
+        return users
+    except Exception as e:
+        print(f"Sheet Auth Error: {e}")
+        return []
+
+def append_user_to_sheet(role, roll, name, email, hashed_password):
+    sheet_id = os.getenv("DEFAULT_SHEET_ID")
+    if not sheet_id or not sheets_service: return False
+    try:
+        body = {"values": [[role, roll, name, email, hashed_password]]}
+        sheets_service.spreadsheets().values().append(
+            spreadsheetId=sheet_id, range="Users!A:E",
+            valueInputOption="RAW", body=body
+        ).execute()
+        return True
+    except Exception as e:
+        print(f"Sheet Append Error: {e}")
+        return False
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -271,30 +309,36 @@ async def health_check():
 async def register_student(student: StudentRegister):
     ensure_cache()
     
-    # Check if roll number exists in cache
+    # Check if roll number exists in Marks Sheet (Validation)
     student_exists = any(s['rollNumber'] == student.rollNumber for s in student_cache)
     if not student_exists:
-        # Try fetching fresh data once just in case
         fetch_students_from_sheets()
         student_exists = any(s['rollNumber'] == student.rollNumber for s in student_cache)
-        
         if not student_exists:
             raise HTTPException(
                 status_code=400,
-                detail="Invalid roll number. Make sure your data is in the Google Sheet."
+                detail="Invalid roll number. Make sure your marks data is in the Google Sheet."
             )
     
+    hashed_password = get_password_hash(student.password)
+    
+    # 1. OPTION A: Google Sheets DB (Permanent & Editable)
+    # Check duplicates in sheet
+    sheet_users = get_sheet_users()
+    if any(u['rollNumber'] == student.rollNumber for u in sheet_users):
+         raise HTTPException(status_code=400, detail="Student already registered (in Sheet)")
+
+    if append_user_to_sheet('student', student.rollNumber, student.name, student.email, hashed_password):
+         return {"success": True, "message": "Registration successful! Account saved to Google Sheet."}
+
+    # 2. OPTION B: SQLite (Fallback / Ephemeral)
     conn = get_db()
     cursor = conn.cursor()
-    
-    # Check if already registered
     cursor.execute("SELECT * FROM students WHERE roll_number = ?", (student.rollNumber,))
     if cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=400, detail="Student already registered")
     
-    # Hash password and save
-    hashed_password = get_password_hash(student.password)
     try:
         cursor.execute(
             "INSERT INTO students (roll_number, name, email, password) VALUES (?, ?, ?, ?)",
@@ -302,13 +346,33 @@ async def register_student(student: StudentRegister):
         )
         conn.commit()
         conn.close()
-        return {"success": True, "message": "Registration successful! You can now login."}
+        return {"success": True, "message": "Result Account Created (Note: Configure Sheets for permanent storage)"}
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @app.post("/api/login")
 async def login_student(credentials: StudentLogin):
+    # 1. OPTION A: Google Sheet DB
+    sheet_users = get_sheet_users()
+    user = next((u for u in sheet_users 
+                 if u['rollNumber'] == credentials.rollNumber 
+                 and u['email'].lower() == credentials.email.lower()), None)
+    
+    if user:
+        if verify_password(credentials.password, user['password']):
+             access_token = create_access_token(
+                 data={"rollNumber": user['rollNumber'], "email": user['email']}
+             )
+             return {
+                 "success": True, 
+                 "token": access_token, 
+                 "student": {"rollNumber": user['rollNumber'], "name": user['name'], "email": user['email']}
+             }
+        else:
+             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # 2. OPTION B: SQLite Fallback
     conn = get_db()
     cursor = conn.cursor()
     

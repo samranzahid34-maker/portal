@@ -513,26 +513,27 @@ async def login_student(credentials: StudentLogin):
 
 @app.get("/api/marks/{roll_number}")
 async def get_marks(roll_number: str):
-    ensure_cache()
+    print(f"\n=== Marks Request ===")
+    print(f"Requested roll: '{roll_number}'")
     
-    print(f"Looking for roll number: '{roll_number}'")
-    print(f"Cache has {len(student_cache)} students")
+    # Force fresh fetch (Vercel serverless is stateless)
+    print("Forcing fresh data fetch...")
+    fetch_students_from_sheets()
+    
+    print(f"Cache has {len(student_cache)} students after fetch")
     if student_cache:
-        print(f"Sample roll numbers in cache: {[s['rollNumber'] for s in student_cache[:3]]}")
+        print(f"First 5 roll numbers: {[s['rollNumber'] for s in student_cache[:5]]}")
     
     student = next((s for s in student_cache if s['rollNumber'] == roll_number), None)
     
     if not student:
-        # Try fresh fetch
-        print("Student not found, refreshing cache...")
-        fetch_students_from_sheets()
-        student = next((s for s in student_cache if s['rollNumber'] == roll_number), None)
-    
-    if not student:
-        print(f"Student '{roll_number}' not found in cache after refresh")
+        print(f"❌ NOT FOUND: '{roll_number}'")
+        print(f"All {len(student_cache)} roll numbers in cache:")
+        for s in student_cache:
+            print(f"  - '{s['rollNumber']}'")
         raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
     
-    print(f"Found student: {student['name']} with {len(student.get('marks', {}))} marks")
+    print(f"✓ Found: {student['name']} with {len(student.get('marks', {}))} marks")
     return {
         "success": True,
         "student": student

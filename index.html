@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
     <nav class="navbar">
         <div class="logo">UniMarks</div>
@@ -176,31 +174,46 @@
                     document.getElementById('display-roll').textContent = `Roll No: ${s.rollNumber}`;
 
                     const container = document.getElementById('marks-container');
-                    container.innerHTML = '';
+                    
+                    // Create beautiful table
+                    let tableHTML = `
+                        <div class="marks-table-wrapper">
+                            <table class="marks-table">
+                                <thead>
+                                    <tr>
+                    `;
 
-                    if (s.marks && typeof s.marks === 'object') {
-                        Object.entries(s.marks).forEach(([key, value]) => {
-                            const card = document.createElement('div');
-                            card.className = 'mark-card';
-                            const displayValue = (key === 'Total') ? `${value} / 100` : (value || '-');
-                            card.innerHTML = `
-                                <div class="mark-label">${key}</div>
-                                <div class="mark-value">${displayValue}</div>
-                            `;
-                            container.appendChild(card);
+                    // Add headers dynamically
+                    if (Array.isArray(s.marks) && s.marks.length > 0) {
+                        s.marks.forEach(item => {
+                            tableHTML += `<th>${item.label}</th>`;
                         });
-                    } else if (Array.isArray(s.marks)) {
-                        // Fallback for old array format
-                        s.marks.forEach((m, i) => {
-                            const card = document.createElement('div');
-                            card.className = 'mark-card';
-                            card.innerHTML = `
-                                <div class="mark-label">Column ${i + 1}</div>
-                                <div class="mark-value">${m || '-'}</div>
-                            `;
-                            container.appendChild(card);
-                        });
+                        tableHTML += `<th class="total-header">Obtained Marks</th>`;
                     }
+
+                    tableHTML += `
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                    `;
+
+                    // Add values
+                    if (Array.isArray(s.marks) && s.marks.length > 0) {
+                        s.marks.forEach(item => {
+                            tableHTML += `<td>${item.value}</td>`;
+                        });
+                        tableHTML += `<td class="total-cell"><strong>${s.total || 0} / 100</strong></td>`;
+                    }
+
+                    tableHTML += `
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    container.innerHTML = tableHTML;
                 }
             } catch (err) {
                 console.error("Failed to load marks", err);
@@ -226,5 +239,4 @@
         }
     </script>
 </body>
-
 </html>

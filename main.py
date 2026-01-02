@@ -511,75 +511,95 @@ async def login_student(credentials: StudentLogin):
         }
     }
 
+@app.get("/api/test")
+async def test_endpoint():
+    """Test endpoint to verify deployment"""
+    return {
+        "status": "OK",
+        "message": "New deployment is live!",
+        "sheets_service": "initialized" if sheets_service else "not initialized"
+    }
+
 @app.get("/api/marks/{roll_number}")
 async def get_marks(roll_number: str):
-    print(f"\n=== Direct Sheet Lookup for: '{roll_number}' ===")
-    
-    if not sheets_service:
-        raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
-    
-    # Get all configured sources
-    sources = get_sheet_sources()
-    default_sheet = os.getenv("DEFAULT_SHEET_ID")
-    if default_sheet and not any(s[0] == default_sheet for s in sources):
-        sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
-    
-    print(f"Searching in {len(sources)} sheets...")
-    
-    # Standard headers
-    headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
-    
-    # Search each sheet directly
-    for source in sources:
-        if len(source) == 3:
-            sheet_id, range_val, name = source
-        else:
-            sheet_id, range_val = source
-            name = "Unknown"
+    try:
+        print(f"\n=== Direct Sheet Lookup for: '{roll_number}' ===")
+        print(f"Sheets service status: {sheets_service is not None}")
         
-        print(f"Checking sheet: {name}")
+        if not sheets_service:
+            print("❌ Sheets service not initialized!")
+            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
         
-        try:
-            result = sheets_service.spreadsheets().values().get(
-                spreadsheetId=sheet_id,
-                range=range_val
-            ).execute()
+        # Get all configured sources
+        sources = get_sheet_sources()
+        default_sheet = os.getenv("DEFAULT_SHEET_ID")
+        if default_sheet and not any(s[0] == default_sheet for s in sources):
+            sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
+        
+        print(f"Searching in {len(sources)} sheets...")
+        
+        # Standard headers
+        headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
+        
+        # Search each sheet directly
+        for source in sources:
+            if len(source) == 3:
+                sheet_id, range_val, name = source
+            else:
+                sheet_id, range_val = source
+                name = "Unknown"
             
-            rows = result.get('values', [])
-            print(f"  Found {len(rows)} rows")
+            print(f"Checking sheet: {name}")
             
-            for row in rows:
-                if row and len(row) >= 2:
-                    row_roll = row[0].strip()
-                    
-                    if row_roll == roll_number:
-                        print(f"✓ MATCH FOUND in {name}!")
+            try:
+                result = sheets_service.spreadsheets().values().get(
+                    spreadsheetId=sheet_id,
+                    range=range_val
+                ).execute()
+                
+                rows = result.get('values', [])
+                print(f"  Found {len(rows)} rows")
+                
+                for row in rows:
+                    if row and len(row) >= 2:
+                        row_roll = row[0].strip()
                         
-                        student_name = row[1].strip()
-                        marks_data = {}
-                        raw_marks = row[2:]
-                        
-                        for i, mark in enumerate(raw_marks):
-                            if i < len(headers):
-                                marks_data[headers[i]] = mark
-                            else:
-                                marks_data[f"Extra {i}"] = mark
-                        
-                        return {
-                            "success": True,
-                            "student": {
-                                "rollNumber": row_roll,
-                                "name": student_name,
-                                "marks": marks_data
+                        if row_roll == roll_number:
+                            print(f"✓ MATCH FOUND in {name}!")
+                            
+                            student_name = row[1].strip()
+                            marks_data = {}
+                            raw_marks = row[2:]
+                            
+                            for i, mark in enumerate(raw_marks):
+                                if i < len(headers):
+                                    marks_data[headers[i]] = mark
+                                else:
+                                    marks_data[f"Extra {i}"] = mark
+                            
+                            return {
+                                "success": True,
+                                "student": {
+                                    "rollNumber": row_roll,
+                                    "name": student_name,
+                                    "marks": marks_data
+                                }
                             }
-                        }
+            
+            except Exception as e:
+                print(f"  Error reading sheet {name}: {e}")
+                continue
         
-        except Exception as e:
-            print(f"  Error reading sheet {name}: {e}")
-            continue
+        print(f"❌ Roll number '{roll_number}' not found in any sheet")
+        raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
     
-    print(f"❌ Roll number '{roll_number}' not found in any sheet")
-    raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ UNEXPECTED ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.post("/api/admin/register")
 async def register_admin(admin: AdminRegister):

@@ -510,7 +510,7 @@ async def test_endpoint():
         "sheets_service": "initialized" if sheets_service else "not initialized"
     }
 
-@app.get("/api/marks/{roll_number}")
+@app.get("/api/marks/{roll_number:path}")
 async def get_marks(roll_number: str):
     try:
         print(f"\n=== Direct Sheet Lookup for: '{roll_number}' ===")

@@ -513,31 +513,73 @@ async def login_student(credentials: StudentLogin):
 
 @app.get("/api/marks/{roll_number}")
 async def get_marks(roll_number: str):
-    print(f"\n=== Marks Request ===")
-    print(f"Requested roll: '{roll_number}'")
+    print(f"\n=== Direct Sheet Lookup for: '{roll_number}' ===")
     
-    # Force fresh fetch (Vercel serverless is stateless)
-    print("Forcing fresh data fetch...")
-    fetch_students_from_sheets()
+    if not sheets_service:
+        raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
     
-    print(f"Cache has {len(student_cache)} students after fetch")
-    if student_cache:
-        print(f"First 5 roll numbers: {[s['rollNumber'] for s in student_cache[:5]]}")
+    # Get all configured sources
+    sources = get_sheet_sources()
+    default_sheet = os.getenv("DEFAULT_SHEET_ID")
+    if default_sheet and not any(s[0] == default_sheet for s in sources):
+        sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
     
-    student = next((s for s in student_cache if s['rollNumber'] == roll_number), None)
+    print(f"Searching in {len(sources)} sheets...")
     
-    if not student:
-        print(f"❌ NOT FOUND: '{roll_number}'")
-        print(f"All {len(student_cache)} roll numbers in cache:")
-        for s in student_cache:
-            print(f"  - '{s['rollNumber']}'")
-        raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
+    # Standard headers
+    headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
     
-    print(f"✓ Found: {student['name']} with {len(student.get('marks', {}))} marks")
-    return {
-        "success": True,
-        "student": student
-    }
+    # Search each sheet directly
+    for source in sources:
+        if len(source) == 3:
+            sheet_id, range_val, name = source
+        else:
+            sheet_id, range_val = source
+            name = "Unknown"
+        
+        print(f"Checking sheet: {name}")
+        
+        try:
+            result = sheets_service.spreadsheets().values().get(
+                spreadsheetId=sheet_id,
+                range=range_val
+            ).execute()
+            
+            rows = result.get('values', [])
+            print(f"  Found {len(rows)} rows")
+            
+            for row in rows:
+                if row and len(row) >= 2:
+                    row_roll = row[0].strip()
+                    
+                    if row_roll == roll_number:
+                        print(f"✓ MATCH FOUND in {name}!")
+                        
+                        student_name = row[1].strip()
+                        marks_data = {}
+                        raw_marks = row[2:]
+                        
+                        for i, mark in enumerate(raw_marks):
+                            if i < len(headers):
+                                marks_data[headers[i]] = mark
+                            else:
+                                marks_data[f"Extra {i}"] = mark
+                        
+                        return {
+                            "success": True,
+                            "student": {
+                                "rollNumber": row_roll,
+                                "name": student_name,
+                                "marks": marks_data
+                            }
+                        }
+        
+        except Exception as e:
+            print(f"  Error reading sheet {name}: {e}")
+            continue
+    
+    print(f"❌ Roll number '{roll_number}' not found in any sheet")
+    raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
 
 @app.post("/api/admin/register")
 async def register_admin(admin: AdminRegister):

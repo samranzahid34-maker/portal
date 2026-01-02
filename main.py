@@ -415,18 +415,8 @@ async def health_check():
 
 @app.post("/api/register")
 async def register_student(student: StudentRegister):
-    ensure_cache()
-    
-    # Check if roll number exists in Marks Sheet (Validation)
-    student_exists = any(s['rollNumber'] == student.rollNumber for s in student_cache)
-    if not student_exists:
-        fetch_students_from_sheets()
-        student_exists = any(s['rollNumber'] == student.rollNumber for s in student_cache)
-        if not student_exists:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid roll number. Make sure your marks data is in the Google Sheet."
-            )
+    # Removed validation - students can register even if marks aren't in sheet yet
+    # They'll see marks if data exists, or "not found" message if it doesn't
     
     hashed_password = get_password_hash(student.password)
     

@@ -239,6 +239,9 @@ async def lifespan(app: FastAPI):
     # Defer heavy fetch logic to first request
     init_db()
     initialize_google_sheets()
+    # Fetch student data on startup
+    print("\n🚀 Server starting - fetching student data...")
+    fetch_students_from_sheets()
     yield
 
 # Initialize FastAPI
@@ -332,23 +335,35 @@ def append_user_to_sheet(env_var_name, role, roll, name, email, hashed_password)
 def get_sheet_sources():
     """Fetch list of Marking Sheets from the Admin Config Sheet"""
     sheet_id = os.getenv("ADMIN_SHEET_ID")
-    if not sheet_id or not sheets_service: return []
+    print(f"\n=== Reading Sources from Admin Sheet ===")
+    print(f"Admin Sheet ID: {sheet_id}")
+    
+    if not sheet_id or not sheets_service:
+        print("❌ No Admin Sheet ID or sheets service not initialized")
+        return []
     try:
         # Format: SheetID | Range | Name
         result = sheets_service.spreadsheets().values().get(
             spreadsheetId=sheet_id, range="Sources!A:C"
         ).execute()
         rows = result.get('values', [])
+        print(f"Got {len(rows)} rows from Sources tab")
+        
         sources = []
-        for row in rows[1:]: # Skip header
+        for idx, row in enumerate(rows[1:], 1): # Skip header
              if len(row) >= 1:
                  sid = row[0].strip()
                  rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
                  name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
                  sources.append((sid, rng, name))
+                 print(f"  Source {idx}: {name} ({sid[:20]}...)")
+        
+        print(f"✓ Loaded {len(sources)} sources")
         return sources
     except Exception as e:
-        print(f"Source Config Read Error: {e}")
+        print(f"❌ Error reading Sources tab: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def append_source_to_sheet(target_sheet_id, target_range, sheet_name=""):

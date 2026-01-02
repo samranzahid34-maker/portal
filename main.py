@@ -548,11 +548,18 @@ async def get_marks(roll_number: str):
                 ).execute()
                 
                 rows = result.get('values', [])
-                print(f"  Found {len(rows)} rows")
+                print(f"  Found {len(rows)} rows in {name}")
                 
-                for row in rows:
+                # Print all roll numbers found for debugging
+                all_rolls = [row[0].strip() if row and len(row) >= 1 else "EMPTY" for row in rows[:20]]  # First 20
+                print(f"  Sample roll numbers: {all_rolls}")
+                
+                for idx, row in enumerate(rows):
                     if row and len(row) >= 2:
                         row_roll = row[0].strip()
+                        
+                        if idx < 5:  # Log first 5 for debugging
+                            print(f"    Row {idx+2}: '{row_roll}' vs '{roll_number}' = {row_roll == roll_number}")
                         
                         if row_roll == roll_number:
                             print(f"✓ MATCH FOUND in {name}!")

@@ -39,7 +39,7 @@ def init_db():
     try:
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
-        
+
         # Students table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS students (
@@ -51,7 +51,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         # Admins table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS admins (
@@ -62,7 +62,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         # Sources table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS sources (
@@ -72,7 +72,7 @@ def init_db():
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         # Initialize Default Admin if Env Vars set (Persistence for Vercel)
         admin_email = os.getenv("ADMIN_EMAIL")
         admin_pass = os.getenv("ADMIN_PASSWORD")
@@ -80,11 +80,10 @@ def init_db():
             cursor.execute("SELECT * FROM admins WHERE email = ?", (admin_email,))
             if not cursor.fetchone():
                 try:
-                    # Late binding call to get_password_hash (defined below) is passing here because 
+                    # Late binding call to get_password_hash (defined below) is passing here because
                     # init_db is called in lifespan, after module load.
                     hashed = get_password_hash(admin_pass)
-                    cursor.execute("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)", 
-                                   ("Admin", admin_email, hashed))
+                    cursor.execute("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)", ("Admin", admin_email, hashed))
                     print("✓ Default Admin initialized from Env")
                 except Exception as e:
                     print(f"Auth Init skipped: {e}")
@@ -94,8 +93,7 @@ def init_db():
         if default_sheet:
             cursor.execute("SELECT * FROM sources WHERE sheet_id = ?", (default_sheet,))
             if not cursor.fetchone():
-                cursor.execute("INSERT INTO sources (sheet_id, range) VALUES (?, ?)", 
-                               (default_sheet, "Sheet1!A2:Z"))
+                cursor.execute("INSERT INTO sources (sheet_id, range) VALUES (?, ?)", (default_sheet, "Sheet1!A2:Z"))
                 print("✓ Default Sheet initialized from Env")
 
         conn.commit()
@@ -114,13 +112,12 @@ def initialize_google_sheets():
             sheet_init_error = "GOOGLE_CREDENTIALS_JSON not found in env"
             print("⚠ Google Sheets credentials not configured")
             return False
-        
+
         credentials_dict = json.loads(credentials_json)
         credentials = service_account.Credentials.from_service_account_info(
             credentials_dict,
             scopes=['https://www.googleapis.com/auth/spreadsheets']
         )
-        
         sheets_service = build('sheets', 'v4', credentials=credentials)
         print("✓ Google Sheets initialized")
         return True
@@ -133,19 +130,19 @@ def fetch_students_from_sheets():
     global student_cache
     if not sheets_service:
         return []
-    
+
     try:
         # Load sources from Permanent Google Sheet Config
         sources = get_sheet_sources()
-        
+
         # Also include DEFAULT_SHEET_ID from Env if not already in sources
         default_sheet = os.getenv("DEFAULT_SHEET_ID")
         if default_sheet and not any(s[0] == default_sheet for s in sources):
             sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
-            
+
         # Fallback to SQLite (Ephemeral) if no sheets configured
         if not sources:
-             try:
+            try:
                 conn = sqlite3.connect(DATABASE_PATH)
                 cursor = conn.cursor()
                 cursor.execute("SELECT sheet_id, range FROM sources")
@@ -153,13 +150,13 @@ def fetch_students_from_sheets():
                 conn.close()
                 for s in db_sources:
                     sources.append((s[0], s[1]))
-             except: pass
-        
+            except:
+                pass
+
         all_students = []
-        
         # Standard headers based on user request
         headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
-        
+
         for source in sources:
             # Handle both old 2-item and new 3-item tuple formats
             if len(source) == 3:
@@ -167,11 +164,11 @@ def fetch_students_from_sheets():
             else:
                 sheet_id, range_val = source
                 name = "Unknown"
-                
+
             print(f"\n=== Fetching from sheet: {name} ===")
             print(f"Sheet ID: {sheet_id}")
             print(f"Range: {range_val}")
-            
+
             try:
                 # Use default range if not specified or invalid (Sheet1!A2:Z skipping header)
                 # Ideally we want A1:Z to see headers, but let's assume standard structure
@@ -179,49 +176,45 @@ def fetch_students_from_sheets():
                     spreadsheetId=sheet_id,
                     range=range_val
                 ).execute()
-                
                 rows = result.get('values', [])
                 print(f"Got {len(rows)} rows from sheet")
-                
+
                 if len(rows) > 0:
                     print(f"First row sample: {rows[0][:3] if len(rows[0]) >= 3 else rows[0]}")
-                
-                for idx, row in enumerate(rows):
-                    if row and len(row) >= 2:
-                        roll_no = row[0].strip()
-                        name = row[1].strip()
-                        
-                        if idx < 3:  # Log first 3 students
-                            print(f"  Student {idx+1}: Roll={roll_no}, Name={name}")
-                        
-                        # Parse marks
-                        marks_data = {}
-                        raw_marks = row[2:]
-                        
-                        for i, mark in enumerate(raw_marks):
-                            if i < len(headers):
-                                label = headers[i]
-                                marks_data[label] = mark
-                            else:
-                                marks_data[f"Extra {i}"] = mark
-                                
-                        all_students.append({
-                            'rollNumber': roll_no,
-                            'name': name,
-                            'marks': marks_data
-                        })
-                        
+                    for idx, row in enumerate(rows):
+                        if row and len(row) >= 2:
+                            roll_no = row[0].strip()
+                            name = row[1].strip()
+
+                            if idx < 3: # Log first 3 students
+                                print(f"  Student {idx+1}: Roll={roll_no}, Name={name}")
+
+                            # Parse marks
+                            marks_data = {}
+                            raw_marks = row[2:]
+                            for i, mark in enumerate(raw_marks):
+                                if i < len(headers):
+                                    label = headers[i]
+                                    marks_data[label] = mark
+                                else:
+                                    marks_data[f"Extra {i}"] = mark
+
+                            all_students.append({
+                                'rollNumber': roll_no,
+                                'name': name,
+                                'marks': marks_data
+                            })
                 print(f"Added {len(rows)} students from this sheet")
-                        
             except Exception as e:
                 print(f"❌ Error fetching from sheet {sheet_id}: {e}")
                 import traceback
                 traceback.print_exc()
-        
+
         student_cache = all_students
         print(f"\n✓ Total cached: {len(all_students)} students")
         if all_students:
             print(f"Sample roll numbers: {[s['rollNumber'] for s in all_students[:5]]}")
+
         return all_students
     except Exception as e:
         print(f"Error fetching students: {e}")
@@ -294,23 +287,26 @@ def get_db():
 # Google Sheets User DB Helpers
 def get_sheet_users(env_var_name="STUDENT_SHEET_ID"):
     sheet_id = os.getenv(env_var_name)
-    if not sheet_id or not sheets_service: return []
+    if not sheet_id or not sheets_service:
+        return []
     try:
         # Default to Sheet1 since these are dedicated files
         result = sheets_service.spreadsheets().values().get(
-            spreadsheetId=sheet_id, range="Sheet1!A:E"
+            spreadsheetId=sheet_id,
+            range="Sheet1!A:E"
         ).execute()
         rows = result.get('values', [])
+
         users = []
         for row in rows[1:]: # Skip header
-             if len(row) >= 5:
-                 users.append({
-                     "role": row[0], 
-                     "rollNumber": row[1],
-                     "name": row[2],
-                     "email": row[3],
-                     "password": row[4]
-                 })
+            if len(row) >= 5:
+                users.append({
+                    "role": row[0],
+                    "rollNumber": row[1],
+                    "name": row[2],
+                    "email": row[3],
+                    "password": row[4]
+                })
         return users
     except Exception as e:
         print(f"Sheet Auth Error ({env_var_name}): {e}")
@@ -318,13 +314,15 @@ def get_sheet_users(env_var_name="STUDENT_SHEET_ID"):
 
 def append_user_to_sheet(env_var_name, role, roll, name, email, hashed_password):
     sheet_id = os.getenv(env_var_name)
-    if not sheet_id or not sheets_service: 
+    if not sheet_id or not sheets_service:
         return False, f"Missing Sheet ID ({env_var_name}) or Service not initialized"
     try:
         body = {"values": [[role, roll, name, email, hashed_password]]}
         sheets_service.spreadsheets().values().append(
-            spreadsheetId=sheet_id, range="Sheet1!A:E",
-            valueInputOption="RAW", body=body
+            spreadsheetId=sheet_id,
+            range="Sheet1!A:E",
+            valueInputOption="RAW",
+            body=body
         ).execute()
         return True, "Success"
     except Exception as e:
@@ -337,27 +335,27 @@ def get_sheet_sources():
     sheet_id = os.getenv("ADMIN_SHEET_ID")
     print(f"\n=== Reading Sources from Admin Sheet ===")
     print(f"Admin Sheet ID: {sheet_id}")
-    
     if not sheet_id or not sheets_service:
         print("❌ No Admin Sheet ID or sheets service not initialized")
         return []
     try:
         # Format: SheetID | Range | Name
         result = sheets_service.spreadsheets().values().get(
-            spreadsheetId=sheet_id, range="Sources!A:C"
+            spreadsheetId=sheet_id,
+            range="Sources!A:C"
         ).execute()
         rows = result.get('values', [])
         print(f"Got {len(rows)} rows from Sources tab")
-        
+
         sources = []
         for idx, row in enumerate(rows[1:], 1): # Skip header
-             if len(row) >= 1:
-                 sid = row[0].strip()
-                 rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
-                 name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
-                 sources.append((sid, rng, name))
-                 print(f"  Source {idx}: {name} ({sid[:20]}...)")
-        
+            if len(row) >= 1:
+                sid = row[0].strip()
+                rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
+                name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
+                sources.append((sid, rng, name))
+                print(f" Source {idx}: {name} ({sid[:20]}...)")
+
         print(f"✓ Loaded {len(sources)} sources")
         return sources
     except Exception as e:
@@ -369,13 +367,15 @@ def get_sheet_sources():
 def append_source_to_sheet(target_sheet_id, target_range, sheet_name=""):
     """Save a new Marking Sheet ID to the Admin Config Sheet"""
     config_sheet_id = os.getenv("ADMIN_SHEET_ID")
-    if not config_sheet_id or not sheets_service: 
+    if not config_sheet_id or not sheets_service:
         return False, "ADMIN_SHEET_ID not configured or Sheets service not initialized"
     try:
         body = {"values": [[target_sheet_id, target_range, sheet_name]]}
         sheets_service.spreadsheets().values().append(
-            spreadsheetId=config_sheet_id, range="Sources!A:C",
-            valueInputOption="RAW", body=body
+            spreadsheetId=config_sheet_id,
+            range="Sources!A:C",
+            valueInputOption="RAW",
+            body=body
         ).execute()
         return True, "Success"
     except Exception as e:
@@ -417,20 +417,20 @@ async def health_check():
 async def register_student(student: StudentRegister):
     # Removed validation - students can register even if marks aren't in sheet yet
     # They'll see marks if data exists, or "not found" message if it doesn't
-    
+
     hashed_password = get_password_hash(student.password)
-    
+
     # 1. OPTION A: Google Sheets DB (Permanent & Editable)
     # Check duplicates in sheet
     sheet_users = get_sheet_users("STUDENT_SHEET_ID")
     if any(u['rollNumber'] == student.rollNumber for u in sheet_users):
-         raise HTTPException(status_code=400, detail="Student already registered (in Sheet)")
+        raise HTTPException(status_code=400, detail="Student already registered (in Sheet)")
 
     success, msg = append_user_to_sheet("STUDENT_SHEET_ID", 'student', student.rollNumber, student.name, student.email, hashed_password)
     if success:
-         return {"success": True, "message": "Registration successful! Account saved to Google Sheet."}
+        return {"success": True, "message": "Registration successful! Account saved to Google Sheet."}
     else:
-         raise HTTPException(status_code=500, detail=f"Failed to save to Student Sheet: {msg}")
+        raise HTTPException(status_code=500, detail=f"Failed to save to Student Sheet: {msg}")
 
     # 2. OPTION B: SQLite (Fallback / Ephemeral)
     conn = get_db()
@@ -439,7 +439,7 @@ async def register_student(student: StudentRegister):
     if cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=400, detail="Student already registered")
-    
+
     try:
         cursor.execute(
             "INSERT INTO students (roll_number, name, email, password) VALUES (?, ?, ?, ?)",
@@ -456,41 +456,37 @@ async def register_student(student: StudentRegister):
 async def login_student(credentials: StudentLogin):
     # 1. OPTION A: Google Sheet DB
     sheet_users = get_sheet_users("STUDENT_SHEET_ID")
-    user = next((u for u in sheet_users 
-                 if u['rollNumber'] == credentials.rollNumber 
-                 and u['email'].lower() == credentials.email.lower()), None)
-    
+    user = next((u for u in sheet_users if u['rollNumber'] == credentials.rollNumber and u['email'].lower() == credentials.email.lower()), None)
+
     if user:
         if verify_password(credentials.password, user['password']):
-             access_token = create_access_token(
-                 data={"rollNumber": user['rollNumber'], "email": user['email']}
-             )
-             return {
-                 "success": True, 
-                 "token": access_token, 
-                 "student": {"rollNumber": user['rollNumber'], "name": user['name'], "email": user['email']}
-             }
+            access_token = create_access_token(
+                data={"rollNumber": user['rollNumber'], "email": user['email']}
+            )
+            return {
+                "success": True,
+                "token": access_token,
+                "student": {"rollNumber": user['rollNumber'], "name": user['name'], "email": user['email']}
+            }
         else:
-             raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # 2. OPTION B: SQLite Fallback
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute(
         "SELECT * FROM students WHERE roll_number = ? AND email = ?",
         (credentials.rollNumber, credentials.email)
     )
     student = cursor.fetchone()
     conn.close()
-    
+
     if not student or not verify_password(credentials.password, student['password']):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     access_token = create_access_token(
         data={"rollNumber": student['roll_number'], "email": student['email']}
     )
-    
     return {
         "success": True,
         "token": access_token,
@@ -515,22 +511,22 @@ async def get_marks(roll_number: str):
     try:
         print(f"\n=== Direct Sheet Lookup for: '{roll_number}' ===")
         print(f"Sheets service status: {sheets_service is not None}")
-        
+
         if not sheets_service:
             print("❌ Sheets service not initialized!")
             raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
-        
+
         # Get all configured sources
         sources = get_sheet_sources()
         default_sheet = os.getenv("DEFAULT_SHEET_ID")
         if default_sheet and not any(s[0] == default_sheet for s in sources):
             sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
-        
+
         print(f"Searching in {len(sources)} sheets...")
-        
+
         # Standard headers
         headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
-        
+
         # Search each sheet directly
         for source in sources:
             if len(source) == 3:
@@ -538,58 +534,75 @@ async def get_marks(roll_number: str):
             else:
                 sheet_id, range_val = source
                 name = "Unknown"
-            
+
             print(f"Checking sheet: {name}")
-            
+
             try:
+                # First, get the header row to know column names
+                header_result = sheets_service.spreadsheets().values().get(
+                    spreadsheetId=sheet_id,
+                    range=range_val.replace('A2:', 'A1:') # Get headers from row 1
+                ).execute()
+                header_rows = header_result.get('values', [])
+                headers = header_rows[0][2:] if header_rows and len(header_rows[0]) > 2 else []
+
+                # Now get the data rows
                 result = sheets_service.spreadsheets().values().get(
                     spreadsheetId=sheet_id,
                     range=range_val
                 ).execute()
-                
                 rows = result.get('values', [])
                 print(f"  Found {len(rows)} rows in {name}")
-                
+                print(f"  Headers from sheet: {headers}")
+
                 # Print all roll numbers found for debugging
-                all_rolls = [row[0].strip() if row and len(row) >= 1 else "EMPTY" for row in rows[:20]]  # First 20
+                all_rolls = [row[0].strip() if row and len(row) >= 1 else "EMPTY" for row in rows[:20]] # First 20
                 print(f"  Sample roll numbers: {all_rolls}")
-                
+
                 for idx, row in enumerate(rows):
                     if row and len(row) >= 2:
                         row_roll = row[0].strip()
-                        
-                        if idx < 5:  # Log first 5 for debugging
-                            print(f"    Row {idx+2}: '{row_roll}' vs '{roll_number}' = {row_roll == roll_number}")
-                        
+
+                        if idx < 5: # Log first 5 for debugging
+                            print(f"  Row {idx+2}: '{row_roll}' vs '{roll_number}' = {row_roll == roll_number}")
+
                         if row_roll == roll_number:
                             print(f"✓ MATCH FOUND in {name}!")
-                            
                             student_name = row[1].strip()
-                            marks_data = {}
+                            marks_data = [] # Changed to array to preserve order
                             raw_marks = row[2:]
-                            
+
+                            # Calculate total
+                            total = 0
                             for i, mark in enumerate(raw_marks):
                                 if i < len(headers):
-                                    marks_data[headers[i]] = mark
-                                else:
-                                    marks_data[f"Extra {i}"] = mark
-                            
+                                    label = headers[i]
+                                    value = mark if mark else '-'
+                                    marks_data.append({"label": label, "value": value})
+
+                                    # Add to total if it's a number
+                                    try:
+                                        if mark and label.lower() != 'total':
+                                            total += float(mark)
+                                    except:
+                                        pass
+
                             return {
                                 "success": True,
                                 "student": {
                                     "rollNumber": row_roll,
                                     "name": student_name,
-                                    "marks": marks_data
+                                    "marks": marks_data,
+                                    "total": total
                                 }
                             }
-            
             except Exception as e:
                 print(f"  Error reading sheet {name}: {e}")
                 continue
-        
+
         print(f"❌ Roll number '{roll_number}' not found in any sheet")
         raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -601,35 +614,34 @@ async def get_marks(roll_number: str):
 @app.post("/api/admin/register")
 async def register_admin(admin: AdminRegister):
     hashed_password = get_password_hash(admin.password)
-    
+
     # 1. OPTION A: Google Sheets DB (Permanent -> admin_data)
     # Check duplicates in sheet
     sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
-    
+
     # STRICT SECURITY: Only 1 Admin Allowed
     if len(sheet_admins) > 0:
         raise HTTPException(status_code=403, detail="Registration Closed. Only one Admin account is allowed.")
 
     if any(u['email'].lower() == admin.email.lower() for u in sheet_admins):
-         raise HTTPException(status_code=400, detail="Admin already registered (in Sheet)")
+        raise HTTPException(status_code=400, detail="Admin already registered (in Sheet)")
 
     success, msg = append_user_to_sheet("ADMIN_SHEET_ID", 'admin', 'Admin', admin.name, admin.email, hashed_password)
     if success:
-         return {"success": True, "message": "Admin Registration successful! Account saved to Google Sheet."}
+        return {"success": True, "message": "Admin Registration successful! Account saved to Google Sheet."}
     else:
-         # If sheet write fails, we MUST tell the user why (Permissions? Tab Name?)
-         # Do not fallback silently, as user expects permanence.
-         raise HTTPException(status_code=500, detail=f"Failed to save to Admin Sheet: {msg}")
+        # If sheet write fails, we MUST tell the user why (Permissions? Tab Name?)
+        # Do not fallback silently, as user expects permanence.
+        raise HTTPException(status_code=500, detail=f"Failed to save to Admin Sheet: {msg}")
 
     # 2. OPTION B: SQLite (Ephemeral)
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute("SELECT * FROM admins WHERE email = ?", (admin.email,))
     if cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=400, detail="Admin already exists")
-    
+
     try:
         cursor.execute(
             "INSERT INTO admins (name, email, password) VALUES (?, ?, ?)",
@@ -647,30 +659,28 @@ async def login_admin(credentials: AdminLogin):
     # 1. OPTION A: Google Sheet DB
     sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
     admin_user = next((u for u in sheet_admins if u['email'].lower() == credentials.email.lower()), None)
-    
+
     if admin_user:
         if verify_password(credentials.password, admin_user['password']):
-             access_token = create_access_token(
-                 data={"id": "sheet_admin", "email": admin_user['email']}
-             )
-             return {"success": True, "token": access_token}
+            access_token = create_access_token(
+                data={"id": "sheet_admin", "email": admin_user['email']}
+            )
+            return {"success": True, "token": access_token}
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # 2. OPTION B: SQLite Fallback
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute("SELECT * FROM admins WHERE email = ?", (credentials.email,))
     admin = cursor.fetchone()
     conn.close()
-    
+
     if not admin or not verify_password(credentials.password, admin['password']):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     access_token = create_access_token(
         data={"id": admin['id'], "email": admin['email']}
     )
-    
     return {
         "success": True,
         "token": access_token,
@@ -686,16 +696,16 @@ async def add_source(source: AddSource):
     # 1. OPTION A: Google Sheet Config (Permanent)
     success, msg = append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z", source.name or "")
     if success:
-         # Refresh immediately
-         fetch_students_from_sheets()
-         return {"success": True, "message": "Source added permanently to Admin Sheet!"}
+        # Refresh immediately
+        fetch_students_from_sheets()
+        return {"success": True, "message": "Source added permanently to Admin Sheet!"}
     else:
-         # Show the EXACT error instead of falling back silently
-         raise HTTPException(status_code=500, detail=f"Failed to save source permanently: {msg}. Please ensure the 'Sources' tab exists in your Admin Google Sheet.")
+        # Show the EXACT error instead of falling back silently
+        raise HTTPException(status_code=500, detail=f"Failed to save source permanently: {msg}. Please ensure the 'Sources' tab exists in your Admin Google Sheet.")
 
 @app.post("/api/admin/refresh")
 async def refresh_data():
-    # Allow refreshing without auth for ease of use if token is lost, 
+    # Allow refreshing without auth for ease of use if token is lost,
     # or better: require auth. Let's keep it open for the admin panel context.
     # In a strict app we would add: current_user: dict = Depends(get_current_admin)
     global student_cache
@@ -708,7 +718,6 @@ async def refresh_data():
 async def get_sources():
     # 1. Get Permanent Sources
     sources = get_sheet_sources()
-    
     # 2. Add Default if present
     default_sheet = os.getenv("DEFAULT_SHEET_ID")
     if default_sheet and not any(s[0] == default_sheet for s in sources):

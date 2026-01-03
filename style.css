@@ -27,7 +27,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
@@ -59,7 +59,7 @@ body {
     background: var(--surface);
     padding: 2.5rem;
     border-radius: 1.5rem;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
     max-width: 450px;
     margin: 0 auto;
 }
@@ -88,7 +88,7 @@ body {
 .tab-btn.active {
     background: white;
     color: var(--primary);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Form Styling */
@@ -191,31 +191,36 @@ h2 {
     background: white;
     border-radius: 1.2rem;
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .marks-table {
     width: 100%;
     border-collapse: collapse;
-    text-align: left;
+    text-align: center;
 }
 
 .marks-table th {
     background: #f8fafc;
-    padding: 1.2rem 1.5rem;
+    padding: 1rem 0.8rem;
     font-weight: 600;
     color: #475569;
     border-bottom: 2px solid #f1f5f9;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     letter-spacing: 0.05em;
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .marks-table td {
-    padding: 1.2rem 1.5rem;
+    padding: 1rem 0.8rem;
     border-bottom: 1px solid #f1f5f9;
     color: #1e293b;
     font-weight: 500;
+    text-align: center;
+    vertical-align: middle;
 }
 
 .marks-table tr:hover {
@@ -239,9 +244,11 @@ h2 {
     .marks-table-wrapper {
         overflow-x: auto;
     }
+
     .container {
         margin: 1rem auto;
     }
+
     .student-info-card {
         padding: 1.5rem;
     }

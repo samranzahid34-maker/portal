@@ -513,16 +513,10 @@ async def get_marks(roll_number: str):
             print("❌ Sheets service not initialized!")
             raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
 
-        # Get all configured sources
+        # Get admin-configured sources only (no DEFAULT_SHEET_ID)
         sources = get_sheet_sources()
-        default_sheet = os.getenv("DEFAULT_SHEET_ID")
-        if default_sheet and not any(s[0] == default_sheet for s in sources):
-            sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
 
         print(f"Searching in {len(sources)} sheets...")
-
-        # Standard headers
-        headers = ["Quiz 1", "Assigment 1", "Mid", "Quiz 2", "Assigment 2", "CCP", "CP", "Final", "Total"]
 
         # Search each sheet directly
         for source in sources:
@@ -566,7 +560,10 @@ async def get_marks(roll_number: str):
                         if row_roll == roll_number:
                             print(f"✓ MATCH FOUND in {name}!")
                             student_name = row[1].strip()
-                            marks_data = [] # Changed to array to preserve order
+                            marks_dict = {
+                                "rollNumber": row_roll,
+                                "name": student_name
+                            }
                             raw_marks = row[2:]
 
                             # Calculate total
@@ -575,7 +572,7 @@ async def get_marks(roll_number: str):
                                 if i < len(headers):
                                     label = headers[i]
                                     value = mark if mark else '-'
-                                    marks_data.append({"label": label, "value": value})
+                                    marks_dict[label] = value
 
                                     # Add to total if it's a number
                                     try:
@@ -584,14 +581,11 @@ async def get_marks(roll_number: str):
                                     except:
                                         pass
 
+                            marks_dict["Total"] = total
+
                             return {
                                 "success": True,
-                                "student": {
-                                    "rollNumber": row_roll,
-                                    "name": student_name,
-                                    "marks": marks_data,
-                                    "total": total
-                                }
+                                "marks": marks_dict
                             }
             except Exception as e:
                 print(f"  Error reading sheet {name}: {e}")

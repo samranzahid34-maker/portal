@@ -463,7 +463,12 @@ async def register_student(student: StudentRegister):
 async def login_student(credentials: StudentLogin):
     # 1. OPTION A: Google Sheet DB
     sheet_users = get_sheet_users("STUDENT_SHEET_ID")
-    user = next((u for u in sheet_users if u['rollNumber'] == credentials.rollNumber and u['email'].lower() == credentials.email.lower()), None)
+    
+    # Robust matching (Case insensitive, ignore whitespace - Fix for Mobile)
+    input_roll = credentials.rollNumber.strip().lower()
+    input_email = credentials.email.strip().lower()
+
+    user = next((u for u in sheet_users if u['rollNumber'].strip().lower() == input_roll and u['email'].strip().lower() == input_email), None)
 
     if user:
         if verify_password(credentials.password, user['password']):
@@ -675,7 +680,11 @@ async def register_admin(admin: AdminRegister):
 async def login_admin(credentials: AdminLogin):
     # 1. OPTION A: Google Sheet DB
     sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
-    admin_user = next((u for u in sheet_admins if u['email'].lower() == credentials.email.lower()), None)
+
+    # Robust matching (Fix for Mobile users adding spaces)
+    input_email = credentials.email.strip().lower()
+
+    admin_user = next((u for u in sheet_admins if u['email'].strip().lower() == input_email), None)
 
     if admin_user:
         if verify_password(credentials.password, admin_user['password']):

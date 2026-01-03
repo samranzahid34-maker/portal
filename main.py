@@ -555,17 +555,12 @@ async def test_endpoint():
 @app.get("/api/marks/{roll_number:path}")
 async def get_marks(roll_number: str):
     try:
-        print(f"\n=== Direct Sheet Lookup for: '{roll_number}' ===")
-        print(f"Sheets service status: {sheets_service is not None}")
-
         if not sheets_service:
-            print("❌ Sheets service not initialized!")
-            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
+             raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
 
-        # Get admin-configured sources only (no DEFAULT_SHEET_ID)
+        # Get admin-configured sources only
         sources = get_sheet_sources()
-
-        print(f"Searching in {len(sources)} sheets...")
+        sheet_errors = []
 
         # Search each sheet directly
         for source in sources:
@@ -575,13 +570,14 @@ async def get_marks(roll_number: str):
                 sheet_id, range_val = source
                 name = "Unknown"
 
-            print(f"Checking sheet: {name}")
-
             try:
                 # First, get the header row to know column names
+                # Safe header fetch: Sheet1!1:1 or derived from range
+                header_range = range_val.split("!")[0] + "!1:1" if "!" in range_val else "Sheet1!1:1"
+                
                 header_result = sheets_service.spreadsheets().values().get(
                     spreadsheetId=sheet_id,
-                    range=range_val.replace('A2:', 'A1:') # Get headers from row 1
+                    range=header_range
                 ).execute()
                 header_rows = header_result.get('values', [])
                 headers = header_rows[0][2:] if header_rows and len(header_rows[0]) > 2 else []
@@ -592,60 +588,41 @@ async def get_marks(roll_number: str):
                     range=range_val
                 ).execute()
                 rows = result.get('values', [])
-                print(f"  Found {len(rows)} rows in {name}")
-                print(f"  Headers from sheet: {headers}")
-
-                # Print all roll numbers found for debugging
-                all_rolls = [row[0].strip() if row and len(row) >= 1 else "EMPTY" for row in rows[:20]] # First 20
-                print(f"  Sample roll numbers: {all_rolls}")
-
-                for idx, row in enumerate(rows):
+                
+                for row in rows:
                     if row and len(row) >= 2:
                         row_roll = row[0].strip()
-
-                        if idx < 5: # Log first 5 for debugging
-                            print(f"  Row {idx+2}: '{row_roll}' vs '{roll_number}' = {row_roll == roll_number}")
-
-                        if row_roll == roll_number:
-                            print(f"✓ MATCH FOUND in {name}!")
+                        # Case insensitive match for maximum robustness
+                        if row_roll.lower() == roll_number.lower():
                             student_name = row[1].strip()
                             
-                            # Build marks dictionary for admin
-                            marks_dict = {
-                                "rollNumber": row_roll,
-                                "name": student_name
-                            }
-                            
-                            # Build marks array for student
+                            # Build marks dictionary
+                            marks_dict = {"rollNumber": row_roll, "name": student_name}
                             marks_array = []
                             raw_marks = row[2:]
 
-                            # Calculate total
                             total = 0
                             for i, mark in enumerate(raw_marks):
                                 if i < len(headers):
                                     label = headers[i]
                                     value = mark if mark else '-'
-                                    
-                                    # Add to dictionary (for admin)
                                     marks_dict[label] = value
-                                    
-                                    # Add to array (for student)
                                     marks_array.append({"label": label, "value": value})
-
-                                    # Add to total if it's a number
                                     try:
                                         if mark and label.lower() != 'total':
-                                            total += float(mark)
-                                    except:
-                                        pass
+                                            total += float(mark.replace('%','').strip())
+                                    except: pass
 
+                            # Check if Total is explicitly in sheet, else use calc
+                            # But usually we just return what we calculated or found?
+                            # Let's trust the calculation for consistency, or map 'Total' from sheet if present?
+                            # Sticking to current logic: Calc Total
                             marks_dict["Total"] = total
 
                             return {
                                 "success": True,
-                                "marks": marks_dict,  # For admin dashboard
-                                "student": {          # For student dashboard
+                                "marks": marks_dict,
+                                "student": {
                                     "rollNumber": row_roll,
                                     "name": student_name,
                                     "marks": marks_array,
@@ -653,19 +630,28 @@ async def get_marks(roll_number: str):
                                 }
                             }
             except Exception as e:
-                print(f"  Error reading sheet {name}: {e}")
+                print(f"Error reading sheet {name}: {e}")
+                # Store friendly error
+                err_str = str(e)
+                if "403" in err_str: sheet_errors.append(f"{name}: Permission Denied (Share sheet with service email)")
+                elif "404" in err_str: sheet_errors.append(f"{name}: Sheet Not Found")
+                elif "Unable to parsing" in err_str: sheet_errors.append(f"{name}: Tab/Range Error")
+                else: sheet_errors.append(f"{name}: {err_str}")
                 continue
 
-        print(f"❌ Roll number '{roll_number}' not found in any sheet")
-        raise HTTPException(status_code=404, detail=f"Student marks not found for roll number: {roll_number}")
+        # If we get here, student not found
+        error_detail = f"Student marks not found for: {roll_number}"
+        if sheet_errors:
+            error_detail += f". WARNING: Failed to read sheets: {'; '.join(sheet_errors)}"
+            
+        raise HTTPException(status_code=404, detail=error_detail)
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ UNEXPECTED ERROR: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @app.post("/api/admin/register")
 async def register_admin(admin: AdminRegister):

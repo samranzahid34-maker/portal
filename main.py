@@ -410,6 +410,16 @@ async def health_check():
         "cachedStudents": len(student_cache)
     }
 
+@app.get("/api/debug/admins")
+async def debug_admins():
+    """Debug endpoint to check admin users from Google Sheets"""
+    sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+    return {
+        "success": True,
+        "count": len(sheet_admins),
+        "admins": [{"email": u.get("email"), "name": u.get("name"), "role": u.get("role")} for u in sheet_admins]
+    }
+
 @app.post("/api/register")
 async def register_student(student: StudentRegister):
     # Removed validation - students can register even if marks aren't in sheet yet

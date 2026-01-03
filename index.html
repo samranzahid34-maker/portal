@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <nav class="navbar">
         <div class="logo">UniMarks</div>
@@ -174,7 +176,7 @@
                     document.getElementById('display-roll').textContent = `Roll No: ${s.rollNumber}`;
 
                     const container = document.getElementById('marks-container');
-                    
+
                     // Create beautiful table
                     let tableHTML = `
                         <div class="marks-table-wrapper">
@@ -198,12 +200,13 @@
                                     <tr>
                     `;
 
+
                     // Add values
                     if (Array.isArray(s.marks) && s.marks.length > 0) {
                         s.marks.forEach(item => {
                             tableHTML += `<td>${item.value}</td>`;
                         });
-                        tableHTML += `<td class="total-cell"><strong>${s.total || 0} / 100</strong></td>`;
+                        tableHTML += `<td class="total-cell"><strong>${s.total || 0}</strong></td>`;
                     }
 
                     tableHTML += `
@@ -239,4 +242,5 @@
         }
     </script>
 </body>
+
 </html>

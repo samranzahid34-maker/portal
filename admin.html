@@ -1,4 +1,5 @@
-f<!DOCTYPE html>
+f
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -56,7 +57,7 @@ f<!DOCTYPE html>
 </head>
 
 <body>
-    <nav class="navbar">
+    <nav class="navbar" id="admin-navbar" style="display:none">
         <div class="logo">UniMarks Admin</div>
         <div class="nav-links">
             <a href="/">Student View</a>
@@ -260,7 +261,7 @@ f<!DOCTYPE html>
                 const data = await res.json();
                 if (data.success) {
                     alert('Success! Latest data fetched from Google Sheets.');
-                                        loadSources();
+                    loadSources();
                 } else {
                     alert('Refresh failed.');
                 }
@@ -277,6 +278,7 @@ f<!DOCTYPE html>
                 document.getElementById('admin-login').style.display = 'none';
                 document.getElementById('admin-register').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'grid';
+                document.getElementById('admin-navbar').style.display = 'flex';
                 loadSources();
             }
         }

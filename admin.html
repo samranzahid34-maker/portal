@@ -358,7 +358,7 @@
                         </div>
                     `;
                 } else {
-                    display.innerHTML = `<div style="padding:1rem; color:red; background:#fff; border-radius:8px">Student not found</div>`;
+                    display.innerHTML = `<div style="padding:1rem; color:red; background:#fff; border-radius:8px">${data.detail || 'Student not found'}</div>`;
                 }
             } catch (e) {
                 display.innerHTML = `<p style="color:red">Error fetching result</p>`;

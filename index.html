@@ -209,9 +209,22 @@
                     `;
 
                     container.innerHTML = tableHTML;
+                } else {
+                    document.getElementById('marks-container').innerHTML = `
+                        <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px; margin-top: 1rem;">
+                            <strong>Result Not Available</strong><br>
+                            <span style="font-size: 0.9em">${data.detail || 'Please contact admin to upload results.'}</span>
+                        </div>
+                    `;
                 }
             } catch (err) {
                 console.error("Failed to load marks", err);
+                document.getElementById('marks-container').innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px; margin-top: 1rem;">
+                        <strong>System Error</strong><br>
+                        <span style="font-size: 0.9em">${err.message || 'Connection failed'}</span>
+                    </div>
+                `;
             }
         }
 

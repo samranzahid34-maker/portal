@@ -57,9 +57,9 @@ f
 </head>
 
 <body>
-    <nav class="navbar" id="admin-navbar" style="display:none">
+    <nav class="navbar">
         <div class="logo">UniMarks Admin</div>
-        <div class="nav-links">
+        <div class="nav-links" id="admin-nav-links" style="display:none">
             <a href="/">Student View</a>
             <a href="#" onclick="logout()">Logout</a>
         </div>
@@ -278,7 +278,7 @@ f
                 document.getElementById('admin-login').style.display = 'none';
                 document.getElementById('admin-register').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'grid';
-                document.getElementById('admin-navbar').style.display = 'flex';
+                document.getElementById('admin-nav-links').style.display = 'flex';
                 loadSources();
             }
         }

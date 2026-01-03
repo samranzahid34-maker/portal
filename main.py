@@ -570,10 +570,15 @@ async def get_marks(roll_number: str):
                         if row_roll == roll_number:
                             print(f"✓ MATCH FOUND in {name}!")
                             student_name = row[1].strip()
+                            
+                            # Build marks dictionary for admin
                             marks_dict = {
                                 "rollNumber": row_roll,
                                 "name": student_name
                             }
+                            
+                            # Build marks array for student
+                            marks_array = []
                             raw_marks = row[2:]
 
                             # Calculate total
@@ -582,7 +587,12 @@ async def get_marks(roll_number: str):
                                 if i < len(headers):
                                     label = headers[i]
                                     value = mark if mark else '-'
+                                    
+                                    # Add to dictionary (for admin)
                                     marks_dict[label] = value
+                                    
+                                    # Add to array (for student)
+                                    marks_array.append({"label": label, "value": value})
 
                                     # Add to total if it's a number
                                     try:
@@ -595,7 +605,13 @@ async def get_marks(roll_number: str):
 
                             return {
                                 "success": True,
-                                "marks": marks_dict
+                                "marks": marks_dict,  # For admin dashboard
+                                "student": {          # For student dashboard
+                                    "rollNumber": row_roll,
+                                    "name": student_name,
+                                    "marks": marks_array,
+                                    "total": total
+                                }
                             }
             except Exception as e:
                 print(f"  Error reading sheet {name}: {e}")

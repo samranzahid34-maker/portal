@@ -253,12 +253,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class StudentRegister(BaseModel):
     rollNumber: str
     name: str
-    email: EmailStr
     password: str
 
 class StudentLogin(BaseModel):
     rollNumber: str
-    email: EmailStr
     password: str
 
 class AdminRegister(BaseModel):
@@ -416,7 +414,6 @@ async def health_check():
 async def register_student(student: StudentRegister):
     # Normalize inputs (Clean data before saving)
     student.rollNumber = student.rollNumber.strip()
-    student.email = student.email.strip().lower()
     student.name = student.name.strip()
 
     # Removed validation - students can register even if marks aren't in sheet yet
@@ -430,7 +427,7 @@ async def register_student(student: StudentRegister):
     if any(u['rollNumber'] == student.rollNumber for u in sheet_users):
         raise HTTPException(status_code=400, detail="Student already registered (in Sheet)")
 
-    success, msg = append_user_to_sheet("STUDENT_SHEET_ID", 'student', student.rollNumber, student.name, student.email, hashed_password)
+    success, msg = append_user_to_sheet("STUDENT_SHEET_ID", 'student', student.rollNumber, student.name, "", hashed_password)
     if success:
         return {"success": True, "message": "Registration successful! Account saved to Google Sheet."}
     else:
@@ -447,7 +444,7 @@ async def register_student(student: StudentRegister):
     try:
         cursor.execute(
             "INSERT INTO students (roll_number, name, email, password) VALUES (?, ?, ?, ?)",
-            (student.rollNumber, student.name, student.email, hashed_password)
+            (student.rollNumber, student.name, "", hashed_password)
         )
         conn.commit()
         conn.close()
@@ -463,14 +460,13 @@ async def login_student(credentials: StudentLogin):
     
     # Robust matching (Case insensitive, ignore whitespace - Fix for Mobile)
     input_roll = credentials.rollNumber.strip().lower()
-    input_email = credentials.email.strip().lower()
 
-    user = next((u for u in sheet_users if u['rollNumber'].strip().lower() == input_roll and u['email'].strip().lower() == input_email), None)
+    user = next((u for u in sheet_users if u['rollNumber'].strip().lower() == input_roll), None)
 
     if user:
         if verify_password(credentials.password, user['password']):
             access_token = create_access_token(
-                data={"rollNumber": user['rollNumber'], "email": user['email']}
+                data={"rollNumber": user['rollNumber'], "email": ""}
             )
             return {
                 "success": True,
@@ -484,8 +480,8 @@ async def login_student(credentials: StudentLogin):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT * FROM students WHERE roll_number = ? AND email = ?",
-        (credentials.rollNumber, credentials.email)
+        "SELECT * FROM students WHERE roll_number = ?",
+        (credentials.rollNumber,)
     )
     student = cursor.fetchone()
     conn.close()

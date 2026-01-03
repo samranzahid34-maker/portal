@@ -397,6 +397,47 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 # API Routes
+
+@app.get("/api/debug/config")
+async def debug_config():
+    """Diagnostic tool to verify detailed connection status"""
+    creds_found = bool(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+    sheet_id_found = bool(os.getenv("STUDENT_SHEET_ID"))
+    admin_id_found = bool(os.getenv("ADMIN_SHEET_ID"))
+    
+    error_log = []
+    
+    if not creds_found: error_log.append("Missing GOOGLE_CREDENTIALS_JSON")
+    if not sheet_id_found: error_log.append("Missing STUDENT_SHEET_ID")
+    
+    service_status = "Not Initialized"
+    sheet_access = "Unknown"
+    
+    if sheets_service:
+        service_status = "Initialized"
+        try:
+            # Try to read properties of Student Sheet
+            sid = os.getenv("STUDENT_SHEET_ID")
+            if sid:
+                c = sheets_service.spreadsheets().get(spreadsheetId=sid).execute()
+                title = c.get('properties', {}).get('title', 'Unknown')
+                sheet_access = f"Success (Found Sheet: '{title}')"
+        except Exception as e:
+            sheet_access = f"Failed (Error: {str(e)})"
+            error_log.append(f"Cannot access Sheet: {str(e)}")
+            
+    return {
+        "env_vars": {
+            "credentials": "Present" if creds_found else "Missing",
+            "student_sheet_id": "Present" if sheet_id_found else "Missing",
+             "admin_sheet_id": "Present" if admin_id_found else "Missing"
+        },
+        "service_status": service_status,
+        "sheet_connection": sheet_access,
+        "instructions": "If Sheet Connection Failed, share your sheet with: student-marks-portal@ml-student-mark-sheet.iam.gserviceaccount.com",
+        "errors": error_log
+    }
+
 @app.get("/api/health")
 async def health_check():
     return {

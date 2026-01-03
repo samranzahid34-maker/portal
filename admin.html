@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+f<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -260,6 +260,7 @@
                 const data = await res.json();
                 if (data.success) {
                     alert('Success! Latest data fetched from Google Sheets.');
+                                        loadSources();
                 } else {
                     alert('Refresh failed.');
                 }

@@ -410,15 +410,7 @@ async def health_check():
         "cachedStudents": len(student_cache)
     }
 
-@app.get("/api/debug/users")
-async def debug_users():
-    """Debug endpoint to verify Google Sheets connectivity and data persistence"""
-    s_users = get_sheet_users("STUDENT_SHEET_ID")
-    return {
-        "success": True,
-        "student_count": len(s_users),
-        "students": [{"roll": u.get("rollNumber"), "email": u.get("email")} for u in s_users]
-    }
+
 
 @app.post("/api/register")
 async def register_student(student: StudentRegister):

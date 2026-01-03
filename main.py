@@ -135,10 +135,7 @@ def fetch_students_from_sheets():
         # Load sources from Permanent Google Sheet Config
         sources = get_sheet_sources()
 
-        # Also include DEFAULT_SHEET_ID from Env if not already in sources
-        default_sheet = os.getenv("DEFAULT_SHEET_ID")
-        if default_sheet and not any(s[0] == default_sheet for s in sources):
-            sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
+       
 
         # Fallback to SQLite (Ephemeral) if no sheets configured
         if not sources:
@@ -718,11 +715,7 @@ async def refresh_data():
 async def get_sources():
     # 1. Get Permanent Sources
     sources = get_sheet_sources()
-    # 2. Add Default if present
-    default_sheet = os.getenv("DEFAULT_SHEET_ID")
-    if default_sheet and not any(s[0] == default_sheet for s in sources):
-        sources.insert(0, (default_sheet, "Sheet1!A2:Z", "Default Sheet"))
-
+    
     # Format for frontend
     data = [{"sheetId": s[0], "range": s[1], "name": s[2] if len(s) > 2 else s[0][:15] + "..."} for s in sources]
     return {"success": True, "sources": data}

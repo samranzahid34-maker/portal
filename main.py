@@ -572,8 +572,27 @@ async def get_marks(roll_number: str):
 
             try:
                 # First, get the header row to know column names
-                # Safe header fetch: Sheet1!1:1 or derived from range
-                header_range = range_val.split("!")[0] + "!1:1" if "!" in range_val else "Sheet1!1:1"
+                # Determine Header Row dynamically based on Data Range
+                # Logic: If data starts at A3, Header is at Row 2.
+                header_row = 1
+                sheet_part = "Sheet1"
+                
+                if "!" in range_val:
+                    parts = range_val.split("!")
+                    sheet_part = parts[0]
+                    range_part = parts[1]
+                else:
+                    range_part = range_val
+
+                # Find start row number in range (e.g. A3:Z -> 3)
+                import re
+                match = re.search(r'([0-9]+)', range_part)
+                if match:
+                    data_start_row = int(match.group(1))
+                    if data_start_row > 1:
+                        header_row = data_start_row - 1
+                
+                header_range = f"{sheet_part}!{header_row}:{header_row}"
                 
                 header_result = sheets_service.spreadsheets().values().get(
                     spreadsheetId=sheet_id,

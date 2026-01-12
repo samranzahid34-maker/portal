@@ -495,8 +495,9 @@ h2 {
     }
 
     /* Add padding to scrollable areas so fixed footer doesn't cover content */
-    .split-layout {
+    .split-left {
         padding-bottom: 140px;
+        /* Extend dark background behind footer */
     }
 
     .container {

@@ -19,6 +19,7 @@
             padding: 2rem;
             border-right: 1px solid #374151;
             color: white;
+            height: 100%;
         }
 
         .sidebar-link {
@@ -44,6 +45,7 @@
 
         .main-content {
             padding: 2rem;
+            background: #f8fafc;
         }
 
         .source-list {
@@ -59,6 +61,29 @@
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
+        }
+
+        /* Responsive Improvements */
+        @media (max-width: 768px) {
+            .admin-layout {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #374151;
+                padding: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .source-item {
+                flex-direction: column;
+                gap: 1rem;
+            }
         }
     </style>
 </head>

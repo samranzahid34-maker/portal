@@ -220,40 +220,36 @@
 
                     const container = document.getElementById('marks-container');
 
-                    // Create beautiful table
+                    // Create vertical list table (Transposed view)
                     let tableHTML = `
                         <div class="marks-table-wrapper">
                             <table class="marks-table">
-                                <thead>
-                                    <tr>
-                    `;
-
-                    // Add headers dynamically
-                    if (Array.isArray(s.marks) && s.marks.length > 0) {
-                        s.marks.forEach(item => {
-                            tableHTML += `<th>${item.label}</th>`;
-                        });
-                        tableHTML += `<th class="total-header">Obtained Marks</th>`;
-                    }
-
-                    tableHTML += `
-                                    </tr>
-                                </thead>
                                 <tbody>
-                                    <tr>
                     `;
 
-
-                    // Add values
+                    // Add rows dynamically (Label | Value)
                     if (Array.isArray(s.marks) && s.marks.length > 0) {
                         s.marks.forEach(item => {
-                            tableHTML += `<td>${item.value}</td>`;
+                            tableHTML += `
+                                <tr>
+                                    <th style="text-align: left; width: 60%;">${item.label}</th> <!-- Label on Left -->
+                                    <td>${item.value}</td> <!-- Value on Right -->
+                                </tr>
+                            `;
                         });
-                        tableHTML += `<td class="total-cell"><strong>${s.total || 0}</strong></td>`;
+
+                        // Total Row
+                        tableHTML += `
+                            <tr>
+                                <th class="total-header" style="text-align: left;">Obtained Marks</th>
+                                <td class="total-cell"><strong>${s.total || 0}</strong></td>
+                            </tr>
+                        `;
+                    } else {
+                        tableHTML += `<tr><td colspan="2">No marks found</td></tr>`;
                     }
 
                     tableHTML += `
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>

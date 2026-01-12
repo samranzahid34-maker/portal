@@ -756,6 +756,12 @@ async def login_admin(credentials: AdminLogin):
         }
     }
 
+class UpdateSource(BaseModel):
+    oldSheetId: str
+    sheetId: str
+    range: str
+    name: str
+
 @app.post("/api/admin/add-source")
 async def add_source(source: AddSource):
     # 1. OPTION A: Google Sheet Config (Permanent)
@@ -767,6 +773,50 @@ async def add_source(source: AddSource):
     else:
         # Show the EXACT error instead of falling back silently
         raise HTTPException(status_code=500, detail=f"Failed to save source permanently: {msg}. Please ensure the 'Sources' tab exists in your Admin Google Sheet.")
+
+@app.post("/api/admin/update-source")
+async def update_source(data: UpdateSource):
+    # 1. Get current config sheet range
+    config_sheet_id = os.getenv("ADMIN_SHEET_ID")
+    if not config_sheet_id or not sheets_service:
+        raise HTTPException(status_code=500, detail="Services not configured")
+
+    try:
+        # Read all sources to find index
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=config_sheet_id,
+            range="Sources!A:C"
+        ).execute()
+        rows = result.get('values', [])
+        
+        row_index = -1
+        # Skip header row (index 0), data starts at row 2 (index 1) in Python list, but sheet row is index+1
+        for idx, row in enumerate(rows):
+            if idx == 0: continue # Skip Header
+            if len(row) > 0 and row[0].strip() == data.oldSheetId:
+                row_index = idx + 1 # 1-based index for API
+                break
+        
+        if row_index == -1:
+            raise HTTPException(status_code=404, detail="Source sheet not found to update")
+            
+        # Update specific row
+        body = {"values": [[data.sheetId, data.range, data.name]]}
+        sheets_service.spreadsheets().values().update(
+            spreadsheetId=config_sheet_id,
+            range=f"Sources!A{row_index}:C{row_index}",
+            valueInputOption="RAW",
+            body=body
+        ).execute()
+        
+        # Trigger refresh
+        fetch_students_from_sheets()
+        return {"success": True, "message": "Source updated successfully"}
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
 
 @app.post("/api/admin/refresh")
 async def refresh_data():

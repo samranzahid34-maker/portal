@@ -122,7 +122,31 @@
         </main>
     </div>
 
-    <!-- Login Modal -->
+    <!-- Edit Source Modal -->
+    <div id="edit-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; bg; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
+        <div class="card" style="width: 100%; max-width: 500px; margin: 2rem;">
+            <h2 style="margin-bottom: 0.5rem">Edit Source</h2>
+            <form onsubmit="handleEditSource(event)">
+                <div class="input-group">
+                    <label>Sheet Name</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="input-group">
+                    <label>Spreadsheet ID</label>
+                    <input type="text" id="edit-sheet-id" required>
+                </div>
+                <div class="input-group">
+                    <label>Range</label>
+                    <input type="text" id="edit-range" required>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:1rem;">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- ADMIN SPLIT AUTH LAYOUT -->
     <div id="admin-auth-container" class="split-layout">
         <!-- Left Side: Forms -->
@@ -349,24 +373,77 @@
                 if (data.success && data.sources) {
                     const list = document.getElementById('source-list');
                     list.innerHTML = data.sources.map(s => `
-                        <div class="source-item">
+                        <div class="source-item" style="align-items: center;">
                             <div style="flex: 1">
                                 <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.3rem; color: var(--primary);">
                                     ${s.name || 'Unnamed Sheet'}
                                 </div>
-                                <a href="https://docs.google.com/spreadsheets/d/${s.sheetId}" target="_blank" 
-                                   style="color:#64748b; text-decoration:none; font-size:0.85rem;">
-                                   📄 ${s.sheetId.substring(0, 20)}... ↗
-                                </a>
-                                <br><small style="color: #94a3b8">${s.range}</small>
+                                <div style="font-size:0.85rem; color:#64748b;">
+                                    ${s.sheetId.substring(0, 20)}...
+                                </div>
+                                <small style="color: #94a3b8">${s.range}</small>
                             </div>
-                            <div style="color: #10b981; font-size: 0.9rem; font-weight: 500;">● Active</div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button onclick="openEditModal('${s.sheetId}', '${s.name}', '${s.range}')" 
+                                    class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                    Edit
+                                </button>
+                                <a href="https://docs.google.com/spreadsheets/d/${s.sheetId}" target="_blank" 
+                                   class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration: none; display: inline-block;">
+                                   Open ↗
+                                </a>
+                            </div>
                         </div>
                     `).join('');
                 } else {
                     document.getElementById('source-list').innerHTML = '<div style="padding:1rem">No configurations found</div>';
                 }
             } catch (e) { console.error("Failed to load sources"); }
+        }
+
+        let currentEditId = null;
+
+        function openEditModal(id, name, range) {
+            currentEditId = id;
+            document.getElementById('edit-modal').style.display = 'flex';
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-range').value = range;
+            document.getElementById('edit-sheet-id').value = id;
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+            currentEditId = null;
+        }
+
+        async function handleEditSource(e) {
+            e.preventDefault();
+            const name = document.getElementById('edit-name').value;
+            const sheetId = document.getElementById('edit-sheet-id').value;
+            const range = document.getElementById('edit-range').value;
+
+            try {
+                const res = await fetch(`${API_URL}/update-source`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        oldSheetId: currentEditId,
+                        sheetId,
+                        name,
+                        range
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Updated successfully');
+                    closeEditModal();
+                    loadSources();
+                } else {
+                    alert('Update failed: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
         }
 
         async function searchStudent(e) {

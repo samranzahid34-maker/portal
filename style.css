@@ -51,7 +51,8 @@ body {
 .container {
     max-width: 1000px;
     margin: 2rem auto;
-    padding: 0 1rem;
+    padding: 0 1rem 120px 1rem;
+    /* Added bottom padding for fixed footer */
 }
 
 /* Card Styling */

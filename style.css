@@ -201,11 +201,12 @@ h2 {
 }
 
 .marks-table th {
-    background: #f8fafc;
+    background: #111827;
+    /* Charcoal Black */
     padding: 1rem 0.8rem;
     font-weight: 600;
-    color: #475569;
-    border-bottom: 2px solid #f1f5f9;
+    color: white;
+    border-bottom: 2px solid #374151;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;

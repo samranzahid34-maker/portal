@@ -123,49 +123,81 @@
     </div>
 
     <!-- Login Modal -->
-    <div id="admin-login" class="container">
-        <div class="card">
-            <h2>Admin Login</h2>
-            <form onsubmit="handleAdminLogin(event)">
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" id="adm-email" required>
-                </div>
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" id="adm-pass" required>
-                </div>
-                <button class="btn-primary">Login</button>
-            </form>
-            <!-- Temporary Registration Link for Setup -->
-            <p style="margin-top:1rem; font-size:0.8rem; text-align:center">
-                <a href="#" onclick="showRegister()">First time? Register</a>
-            </p>
-        </div>
-    </div>
+    <!-- ADMIN SPLIT AUTH LAYOUT -->
+    <div id="admin-auth-container" class="split-layout">
+        <!-- Left Side: Forms -->
+        <div class="split-left dark-form">
 
-    <!-- Register Modal -->
-    <div id="admin-register" class="container" style="display:none">
-        <div class="card">
-            <h2>Admin Registration</h2>
-            <form onsubmit="handleAdminRegister(event)">
-                <div class="input-group">
-                    <label>Name</label>
-                    <input type="text" id="reg-adm-name" required>
-                </div>
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" id="reg-adm-email" required>
-                </div>
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" id="reg-adm-pass" required>
-                </div>
-                <button class="btn-primary">Register</button>
-            </form>
-            <p style="margin-top:1rem; font-size:0.8rem; text-align:center">
-                <a href="#" onclick="showLogin()">Back to Login</a>
-            </p>
+            <!-- Login Wrapper -->
+            <div id="admin-login-wrapper">
+                <h2>Admin Login</h2>
+                <p class="subtitle">Manage student marks & sheets</p>
+                <form onsubmit="handleAdminLogin(event)">
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="adm-email" placeholder="admin@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="adm-pass" placeholder="••••••••" required>
+                    </div>
+                    <button class="btn-primary">Login</button>
+
+                    <div class="auth-toggle">
+                        First time here? <a onclick="toggleAdminForms('register')">Create Account</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Register Wrapper (Hidden) -->
+            <div id="admin-register-wrapper" style="display:none">
+                <h2>Admin Registration</h2>
+                <p class="subtitle">Create a new admin account</p>
+                <form onsubmit="handleAdminRegister(event)">
+                    <div class="input-group">
+                        <label>Name</label>
+                        <input type="text" id="reg-adm-name" placeholder="Full Name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="reg-adm-email" placeholder="admin@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="reg-adm-pass" placeholder="Create Password" required>
+                    </div>
+                    <button class="btn-primary">Register</button>
+
+                    <div class="auth-toggle">
+                        Already have an account? <a onclick="toggleAdminForms('login')">Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Side: Illustration -->
+        <div class="split-right">
+            <h1>Admin Control Center</h1>
+            <p style="margin-top: 1rem; opacity: 0.9; font-size: 1.1rem;">Securely manage academic records</p>
+
+            <div class="illustration-container">
+                <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" class="illustration-svg">
+                    <rect x="100" y="100" width="300" height="200" rx="10" fill="rgba(255,255,255,0.1)" />
+                    <rect x="100" y="80" width="300" height="20" rx="5" fill="rgba(255,255,255,0.2)" />
+                    <circle cx="120" cy="90" r="3" fill="#ef4444" />
+                    <circle cx="130" cy="90" r="3" fill="#f59e0b" />
+                    <circle cx="140" cy="90" r="3" fill="#10b981" />
+
+                    <rect x="130" y="140" width="100" height="10" rx="2" fill="rgba(255,255,255,0.3)" />
+                    <rect x="130" y="170" width="240" height="8" rx="2" fill="rgba(255,255,255,0.2)" />
+                    <rect x="130" y="190" width="240" height="8" rx="2" fill="rgba(255,255,255,0.2)" />
+                    <rect x="130" y="210" width="240" height="8" rx="2" fill="rgba(255,255,255,0.2)" />
+                    <rect x="130" y="230" width="180" height="8" rx="2" fill="rgba(255,255,255,0.2)" />
+
+                    <circle cx="350" cy="250" r="40" fill="rgba(99, 102, 241, 0.5)" />
+                    <path d="M350 240 L360 250 L340 250 Z" fill="white" />
+                </svg>
+            </div>
         </div>
     </div>
 
@@ -193,6 +225,19 @@
             } catch (e) { console.error(e); }
         }
 
+        function toggleAdminForms(type) {
+            const loginWrap = document.getElementById('admin-login-wrapper');
+            const regWrap = document.getElementById('admin-register-wrapper');
+
+            if (type === 'register') {
+                loginWrap.style.display = 'none';
+                regWrap.style.display = 'block';
+            } else {
+                regWrap.style.display = 'none';
+                loginWrap.style.display = 'block';
+            }
+        }
+
         async function handleAdminRegister(e) {
             e.preventDefault();
             const name = document.getElementById('reg-adm-name').value;
@@ -208,7 +253,7 @@
                 const data = await res.json();
                 if (data.success) {
                     alert('Registered! Please login.');
-                    showLogin();
+                    toggleAdminForms('login');
                 } else {
                     alert(data.detail);
                 }
@@ -274,22 +319,16 @@
 
         function checkAuth() {
             if (localStorage.getItem('adminToken')) {
-                document.getElementById('admin-login').style.display = 'none';
-                document.getElementById('admin-register').style.display = 'none';
+                document.getElementById('admin-auth-container').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'grid';
+                if (document.querySelector('.navbar')) document.querySelector('.navbar').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'inline-block';
                 loadSources();
+            } else {
+                document.getElementById('admin-auth-container').style.display = 'flex';
+                document.getElementById('admin-panel').style.display = 'none';
+                if (document.querySelector('.navbar')) document.querySelector('.navbar').style.display = 'none';
             }
-        }
-
-        function showRegister() {
-            document.getElementById('admin-login').style.display = 'none';
-            document.getElementById('admin-register').style.display = 'flex';
-        }
-
-        function showLogin() {
-            document.getElementById('admin-register').style.display = 'none';
-            document.getElementById('admin-login').style.display = 'flex';
         }
 
         function logout() {

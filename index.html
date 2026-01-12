@@ -10,25 +10,24 @@
 </head>
 
 <body>
-    <nav class="navbar">
+    <!-- Navbar (Hidden on Login Page) -->
+    <nav class="navbar" id="dashboard-nav" style="display: none;">
         <div class="logo">Subject Marks Portal</div>
         <div class="nav-links">
             <a href="admin.html">Admin</a>
         </div>
     </nav>
 
-    <div class="container">
-        <!-- Student Section -->
-        <div id="student-section" class="section active">
-            <div class="card">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab(this, 'login-form')">Login</button>
-                    <button class="tab-btn" onclick="switchTab(this, 'register-form')">Register</button>
-                </div>
+    <!-- NEW SPLIT SCREEN AUTH LAYOUT -->
+    <div id="auth-container" class="split-layout">
+        <!-- Left Side: Forms -->
+        <div class="split-left dark-form">
+            <!-- Login Form -->
+            <div id="login-form-wrapper">
+                <h2>Login</h2>
+                <p class="subtitle">Enter your account details</p>
 
-                <!-- Login Form -->
-                <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
-                    <h2>Welcome Back</h2>
+                <form onsubmit="handleLogin(event)">
                     <div class="input-group">
                         <label>Roll Number</label>
                         <input type="text" id="login-roll" placeholder="Fa-2022/BSCS/000" required>
@@ -36,15 +35,28 @@
 
                     <div class="input-group">
                         <label>Password</label>
-                        <input type="password" id="login-pass" required>
+                        <input type="password" id="login-pass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" class="btn-primary">View Marks</button>
-                </form>
 
-                <!-- Register Form -->
-                <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
-                    <h2>Create Account</h2>
-                    <p class="subtitle">Register to view your result</p>
+                    <div style="text-align: right; margin-bottom: 1.5rem;">
+                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">Forgot
+                            Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Login</button>
+
+                    <div class="auth-toggle">
+                        Don't have an account? <a onclick="toggleForms('register')">Sign up</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Register Form (Hidden by default) -->
+            <div id="register-form-wrapper" style="display: none;">
+                <h2>Sign Up</h2>
+                <p class="subtitle">Create your account</p>
+
+                <form onsubmit="handleRegister(event)">
                     <div class="input-group">
                         <label>Roll Number</label>
                         <input type="text" id="reg-roll" placeholder="Fa-2022/BSCS/000" required>
@@ -53,42 +65,72 @@
                         <label>Full Name</label>
                         <input type="text" id="reg-name" placeholder="Your Name" required>
                     </div>
-
                     <div class="input-group">
                         <label>Password</label>
-                        <input type="password" id="reg-pass" required>
+                        <input type="password" id="reg-pass" placeholder="Create a password" required>
                     </div>
-                    <button type="submit" class="btn-primary">Register</button>
+
+                    <button type="submit" class="btn-primary">Sign Up</button>
+
+                    <div class="auth-toggle">
+                        Already have an account? <a onclick="toggleForms('login')">Login</a>
+                    </div>
                 </form>
             </div>
         </div>
 
-        <!-- Marks Display Section (Hidden by default) -->
-        <div id="marks-section" class="section hidden">
-            <div class="header-row">
-                <h1>Academic Transcript</h1>
-                <button class="btn-secondary" onclick="logout()">Logout</button>
-            </div>
+        <!-- Right Side: Illustration -->
+        <div class="split-right">
+            <h1>Welcome to<br>student portal</h1>
+            <p style="margin-top: 1rem; opacity: 0.9; font-size: 1.1rem;">Login to access your account</p>
 
-            <div class="student-info-card">
-                <h3 id="display-name">Student Name</h3>
-                <p id="display-roll">Roll No: 12345</p>
+            <div class="illustration-container">
+                <!-- Simple SVG Illustration -->
+                <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" class="illustration-svg">
+                    <path fill="rgba(255,255,255,0.2)" d="M50,350 L450,350 L450,150 L250,50 L50,150 Z" />
+                    <circle cx="250" cy="200" r="50" fill="rgba(255,255,255,0.4)" />
+                    <rect x="150" y="280" width="200" height="10" rx="5" fill="rgba(255,255,255,0.3)" />
+                    <rect x="180" y="300" width="140" height="10" rx="5" fill="rgba(255,255,255,0.3)" />
+                    <path fill="white" d="M350,250 C350,280 300,350 200,350 L180,300 C200,280 250,250 250,200"
+                        style="opacity:0.8" />
+                    <circle cx="380" cy="100" r="20" fill="#fbbf24" />
+                </svg>
             </div>
+        </div>
+    </div>
 
-            <div class="marks-grid" id="marks-container">
-                <!-- Marks injected here -->
-            </div>
+    <!-- Marks Display Section (Hidden by default, standard white layout) -->
+    <div id="marks-section" class="container section hidden"
+        style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
+        <div class="header-row">
+            <h1>Academic Transcript</h1>
+            <button class="btn-secondary" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="student-info-card">
+            <h3 id="display-name">Student Name</h3>
+            <p id="display-roll">Roll No: 12345</p>
+        </div>
+
+        <div class="marks-grid" id="marks-container">
+            <!-- Marks injected here -->
         </div>
     </div>
 
     <script>
         const API_URL = '/api';
 
-        function switchTab(btn, formId) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(formId).classList.add('active');
+        function toggleForms(type) {
+            const loginWrap = document.getElementById('login-form-wrapper');
+            const regWrap = document.getElementById('register-form-wrapper');
+
+            if (type === 'register') {
+                loginWrap.style.display = 'none';
+                regWrap.style.display = 'block';
+            } else {
+                regWrap.style.display = 'none';
+                loginWrap.style.display = 'block';
+            }
         }
 
         async function handleLogin(e) {
@@ -96,6 +138,7 @@
             const rollNumber = document.getElementById('login-roll').value;
             const password = document.getElementById('login-pass').value;
             const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
 
             try {
                 btn.textContent = 'Verifying...';
@@ -119,7 +162,7 @@
             } catch (err) {
                 alert('Connection error');
             } finally {
-                btn.textContent = 'View Marks';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         }
@@ -130,6 +173,7 @@
             const name = document.getElementById('reg-name').value;
             const password = document.getElementById('reg-pass').value;
             const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
 
             try {
                 btn.textContent = 'Creating...';
@@ -144,14 +188,14 @@
                 const data = await res.json();
                 if (data.success) {
                     alert('Registration successful! Please login.');
-                    switchTab(document.querySelector('.tab-btn:first-child'), 'login-form');
+                    toggleForms('login');
                 } else {
                     alert(data.detail || data.error || 'Registration failed');
                 }
             } catch (err) {
                 alert('Connection error');
             } finally {
-                btn.textContent = 'Register';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         }
@@ -228,10 +272,17 @@
         }
 
         function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.remove('hidden');
-            document.getElementById(id).classList.add('active');
+            if (id === 'marks-section') {
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('marks-section').classList.remove('hidden');
+                document.getElementById('marks-section').classList.add('active');
+                document.getElementById('dashboard-nav').style.display = 'flex';
+            } else {
+                // Should basically reload, but for logic sake
+                document.getElementById('auth-container').style.display = 'flex';
+                document.getElementById('marks-section').classList.add('hidden');
+                document.getElementById('dashboard-nav').style.display = 'none';
+            }
         }
 
         function logout() {
@@ -243,6 +294,10 @@
         if (localStorage.getItem('token')) {
             loadMarks(localStorage.getItem('rollNumber'));
             showSection('marks-section');
+        } else {
+            // Ensure auth is visible
+            document.getElementById('auth-container').style.display = 'flex';
+            document.getElementById('dashboard-nav').style.display = 'none';
         }
     </script>
 </body>

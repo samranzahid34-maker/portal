@@ -417,12 +417,12 @@ h2 {
     bottom: 0;
     left: 0;
     width: 100%;
-    background: white;
+    background: transparent;
     padding: 0.8rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #e2e8f0;
+    border-top: none;
     z-index: 1000;
     font-size: 0.8rem;
     color: #64748b;

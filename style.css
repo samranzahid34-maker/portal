@@ -233,10 +233,25 @@ h2 {
 }
 
 .total-cell {
-    background: #6366f1;
-    color: white;
+    background: white;
+    color: #6366f1;
     font-weight: 700 !important;
     font-size: 1.1rem;
+    border: 1px solid #e2e8f0;
+}
+
+.btn-logout {
+    padding: 0.6rem 1.2rem;
+    background: #111827;
+    color: white;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-logout:hover {
+    background: #1f2937;
 }
 
 /* Responsive */

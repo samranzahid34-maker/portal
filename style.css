@@ -292,15 +292,21 @@ h2 {
 }
 
 /* Illustration Mockup styling */
+/* Illustration Mockup styling */
 .illustration-container {
-    max-width: 80%;
-    margin-top: 2rem;
+    max-width: 450px;
+    /* Reduced from 80% to fixed manageable width */
+    width: 100%;
+    margin-top: 1.5rem;
 }
 
 .illustration-svg {
     width: 100%;
     height: auto;
     filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+    max-height: 400px;
+    /* Limit height to keep it roughly within view */
+    object-fit: contain;
 }
 
 /* Dark Form Styling overrides */

@@ -70,9 +70,6 @@
             <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
             <button onclick="refreshData()" class="btn-primary"
                 style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem">↻ Refresh Data</button>
-            <div style="margin:1rem; font-size:0.8rem; color:#64748b">
-                Edit data in Google Sheets, then click Refresh.
-            </div>
             <!-- <a href="#" class="sidebar-link">Settings</a> -->
         </aside>
 
@@ -80,7 +77,6 @@
             <!-- TAB 1: SOURCES -->
             <div id="tab-sources">
                 <h2>Google Sheets Sources</h2>
-                <p style="color:#64748b">Add Google Sheets IDs to fetch marks from.</p>
 
                 <div class="card" style="max-width: 600px; margin: 1rem 0;">
                     <form onsubmit="addSource(event)">

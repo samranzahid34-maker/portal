@@ -201,12 +201,11 @@ h2 {
 }
 
 .marks-table th {
-    background: #111827;
-    /* Charcoal Black */
+    background: #374151;
     padding: 1rem 0.8rem;
     font-weight: 600;
     color: white;
-    border-bottom: 2px solid #374151;
+    border-bottom: 2px solid #4b5563;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
@@ -229,13 +228,13 @@ h2 {
 }
 
 .total-header {
-    background: #fffbeb !important;
-    color: #92400e !important;
+    background: #6366f1 !important;
+    color: white !important;
 }
 
 .total-cell {
-    background: #fffbeb;
-    color: #b45309;
+    background: #6366f1;
+    color: white;
     font-weight: 700 !important;
     font-size: 1.1rem;
 }

@@ -412,6 +412,7 @@ h2 {
 }
 
 /* Footer Styling */
+/* Footer Styling */
 .site-footer {
     position: fixed;
     bottom: 0;
@@ -425,7 +426,7 @@ h2 {
     border-top: none;
     z-index: 1000;
     font-size: 0.8rem;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .footer-links {
@@ -435,13 +436,30 @@ h2 {
 }
 
 .footer-links a {
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
     transition: color 0.2s;
 }
 
 .footer-links a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+/* Dark Text Override for Dashboard (Light Background) */
+.site-footer.dark-text {
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid #e2e8f0;
+}
+
+.site-footer.dark-text .footer-links a {
+    color: #64748b;
+}
+
+.site-footer.dark-text .footer-links a:hover {
     color: #6366f1;
+    text-decoration: none;
 }
 
 .system-status {
@@ -454,6 +472,7 @@ h2 {
     border-radius: 2rem;
     font-weight: 500;
     font-size: 0.75rem;
+    color: #1e293b;
 }
 
 .status-dot {
@@ -470,8 +489,12 @@ h2 {
         gap: 0.8rem;
         padding: 1rem;
         position: relative;
-        /* Flow smoothly on mobile */
         text-align: center;
+        background: #111827;
+    }
+
+    .site-footer.dark-text {
+        background: white;
     }
 
     .footer-links {

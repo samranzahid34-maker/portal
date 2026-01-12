@@ -162,6 +162,7 @@
                     localStorage.setItem('rollNumber', data.student.rollNumber);
                     loadMarks(data.student.rollNumber);
                     showSection('marks-section');
+                    document.querySelector('.site-footer').classList.add('dark-text');
                 } else {
                     alert(data.detail || data.error || 'Login failed');
                 }
@@ -301,6 +302,7 @@
         if (localStorage.getItem('token')) {
             loadMarks(localStorage.getItem('rollNumber'));
             showSection('marks-section');
+            document.querySelector('.site-footer').classList.add('dark-text');
         } else {
             // Ensure auth is visible
             document.getElementById('auth-container').style.display = 'flex';

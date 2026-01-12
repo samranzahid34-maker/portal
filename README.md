@@ -1,4 +1,4 @@
-# 🎓 Student Marks Portal (Authentication + MongoDB)
+# 🎓 Student Marks Portal (Authentication + Google Sheet)
 
 A secure, professional web application for students to view their marks from Google Sheets, featuring Registration, Login, and an Admin Dashboard.
 

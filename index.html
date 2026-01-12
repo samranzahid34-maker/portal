@@ -226,7 +226,7 @@
                         s.marks.forEach(item => {
                             tableHTML += `
                                 <tr>
-                                    <th style="text-align: left; width: 60%;">${item.label}</th> <!-- Label on Left -->
+                                    <th style="width: 60%;">${item.label}</th>
                                     <td>${item.value}</td> <!-- Value on Right -->
                                 </tr>
                             `;
@@ -235,7 +235,7 @@
                         // Total Row
                         tableHTML += `
                             <tr>
-                                <th class="total-header" style="text-align: left;">Obtained Marks</th>
+                                <th class="total-header">Obtained Marks</th>
                                 <td class="total-cell"><strong>${s.total || 0}</strong></td>
                             </tr>
                         `;

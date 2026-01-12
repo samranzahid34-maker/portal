@@ -259,7 +259,8 @@ h2 {
     display: flex;
     min-height: 100vh;
     width: 100%;
-    overflow: hidden;
+    overflow: auto;
+    /* Allow scrolling */
 }
 
 .split-left {

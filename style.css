@@ -277,8 +277,9 @@ h2 {
 
 .split-right {
     flex: 1.5;
-    background: linear-gradient(135deg, #a855f7, #6366f1);
-    /* Purple Gradient */
+    background: #6366f1;
+    /* Solid Purple */
+    /* Purple Gradient Removed per user request */
     display: flex;
     flex-direction: column;
     justify-content: center;

@@ -644,6 +644,7 @@ async def get_marks(roll_number: str):
                                 "student": {
                                     "rollNumber": row_roll,
                                     "name": student_name,
+                                    "sheetName": name,
                                     "marks": marks_array,
                                     "total": total
                                 }

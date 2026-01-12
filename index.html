@@ -104,6 +104,7 @@
         <div class="student-info-card">
             <h3 id="display-name">Student Name</h3>
             <p id="display-roll">Roll No: 12345</p>
+            <p id="display-sheet" style="font-size: 0.9rem; margin-top: 0.2rem; opacity: 0.9;">Section: -</p>
         </div>
 
         <div class="marks-grid" id="marks-container">
@@ -203,6 +204,7 @@
                     const s = data.student;
                     document.getElementById('display-name').textContent = s.name;
                     document.getElementById('display-roll').textContent = `Roll No: ${s.rollNumber}`;
+                    document.getElementById('display-sheet').textContent = `Section: ${s.sheetName || 'N/A'}`;
 
                     const container = document.getElementById('marks-container');
 

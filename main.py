@@ -1280,6 +1280,57 @@ async def read_root():
 async def read_admin():
     return FileResponse(os.path.join(public_path, "admin.html"))
 
+@app.get("/api/admin/dashboard")
+async def get_dashboard(authorization: Optional[str] = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        admin_email = payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    admin_name = "Admin"
+    if admin_email:
+        admin_name = admin_email.split('@')[0].replace('.', ' ').title()
+
+    sources = get_sheet_sources()
+    sections_data = []
+    
+    for source in sources:
+        try:
+            sh_id = source[0]
+            # Reuse get_sheet_statistics logic
+            stats_response = await get_sheet_statistics(sh_id)
+            if stats_response.get("success"):
+                stats = stats_response["statistics"]
+                sections_data.append({
+                    "id": sh_id,
+                    "name": stats_response["sheetName"],
+                    "totalStudents": stats["totalStudents"],
+                    "classAverage": stats["classAverage"],
+                    "highest": stats["highestScore"],
+                    "lowest": stats["lowestScore"]
+                })
+        except Exception:
+            continue
+
+    total_students = sum(s['totalStudents'] for s in sections_data)
+    avg_sum = sum(s['classAverage'] for s in sections_data)
+    overall_avg = avg_sum / len(sections_data) if sections_data else 0
+    
+    return {
+        "success": True,
+        "admin": { "name": admin_name, "email": admin_email },
+        "summary": {
+            "totalStudents": total_students,
+            "overallAverage": round(overall_avg, 2),
+            "activeSections": len(sections_data)
+        },
+        "sections": sections_data
+    }
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))

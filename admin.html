@@ -101,7 +101,8 @@
 
     <div class="admin-layout" id="admin-panel" style="display:none">
         <aside class="sidebar">
-            <a href="#" class="sidebar-link active" onclick="switchTab('sources', this)">Sheets Source</a>
+            <a href="#" class="sidebar-link active" onclick="switchTab('dashboard', this)">Dashboard</a>
+            <a href="#" class="sidebar-link" onclick="switchTab('sources', this)">Sheets Source</a>
             <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
             <a href="#" class="sidebar-link" onclick="switchTab('statistics', this)">Class Statistics & Grades</a>
             <button onclick="refreshData()" class="btn-primary"
@@ -110,8 +111,82 @@
         </aside>
 
         <main class="main-content">
+            <!-- TAB 0: DASHBOARD -->
+            <div id="tab-dashboard">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <div>
+                        <h2 id="dashboard-welcome" style="margin-bottom: 0.5rem; font-weight:700;">Welcome, Admin</h2>
+                        <p id="dashboard-email" style="color: #64748b; font-size: 0.95rem;">Loading profile...</p>
+                    </div>
+                    <button onclick="loadDashboard()" class="btn-secondary" style="font-size:0.9rem;">↻ Refresh</button>
+                </div>
+
+                <!-- Summary Cards -->
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+                    <div class="card"
+                        style="background:#6366f1; color:white; padding:2rem; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(99, 102, 241, 0.3);">
+                        <div
+                            style="font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; opacity:0.9; margin-bottom:0.5rem;">
+                            Total Students</div>
+                        <div id="dash-total-students" style="font-size:3rem; font-weight:700;">-</div>
+                        <div style="font-size:0.9rem; opacity:0.8; margin-top:0.5rem;">Across all active sections</div>
+                    </div>
+                    <div class="card"
+                        style="background:#3b82f6; color:white; padding:2rem; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(59, 130, 246, 0.3);">
+                        <div
+                            style="font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; opacity:0.9; margin-bottom:0.5rem;">
+                            Overall Average Marks</div>
+                        <div id="dash-overall-avg" style="font-size:3rem; font-weight:700;">-</div>
+                        <div style="font-size:0.9rem; opacity:0.8; margin-top:0.5rem;">Aggregated Performance</div>
+                    </div>
+                    <div class="card"
+                        style="background:#10b981; color:white; padding:2rem; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(16, 185, 129, 0.3);">
+                        <div
+                            style="font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; opacity:0.9; margin-bottom:0.5rem;">
+                            Active Sections</div>
+                        <div id="dash-active-sections" style="font-size:3rem; font-weight:700;">-</div>
+                        <div style="font-size:0.9rem; opacity:0.8; margin-top:0.5rem;">Configured Sheets</div>
+                    </div>
+                </div>
+
+                <!-- Sections Grid/Table -->
+                <h3 style="margin-bottom:1.5rem; color:var(--text); font-weight:600; font-size: 1.25rem;">
+                    📊 Section Performance Overview
+                </h3>
+                <div class="card" style="padding:0; overflow:hidden; max-width:100%; border-radius: 0.8rem;">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                            <tr>
+                                <th
+                                    style="padding:1.2rem; text-align:left; font-size:0.85rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">
+                                    Section Name</th>
+                                <th
+                                    style="padding:1.2rem; text-align:center; font-size:0.85rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">
+                                    Students</th>
+                                <th
+                                    style="padding:1.2rem; text-align:center; font-size:0.85rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">
+                                    Avg Marks</th>
+                                <th
+                                    style="padding:1.2rem; text-align:center; font-size:0.85rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">
+                                    Highest</th>
+                                <th
+                                    style="padding:1.2rem; text-align:center; font-size:0.85rem; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">
+                                    Lowest</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dash-sections-body">
+                            <tr>
+                                <td colspan="5" style="padding:2rem; text-align:center; color:#94a3b8;">Loading data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- TAB 1: SOURCES -->
-            <div id="tab-sources">
+            <div id="tab-sources" style="display:none;">
                 <h2>Google Sheets Sources</h2>
 
                 <div class="card" style="max-width: 600px; margin: 1rem 0;">
@@ -577,6 +652,7 @@
                 if (document.querySelector('.navbar')) document.querySelector('.navbar').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'inline-block';
                 loadSources();
+                loadDashboard();
             } else {
                 document.getElementById('admin-auth-container').style.display = 'flex';
                 document.getElementById('admin-panel').style.display = 'none';
@@ -711,6 +787,7 @@
         }
 
         function switchTab(tabName, linkElement) {
+            document.getElementById('tab-dashboard').style.display = tabName === 'dashboard' ? 'block' : 'none';
             document.getElementById('tab-sources').style.display = tabName === 'sources' ? 'block' : 'none';
             document.getElementById('tab-results').style.display = tabName === 'results' ? 'block' : 'none';
             document.getElementById('tab-statistics').style.display = tabName === 'statistics' ? 'block' : 'none';
@@ -721,9 +798,52 @@
                 linkElement.classList.add('active');
             }
 
-            // Load sheet options when statistics tab is opened
+            // Load data based on tab
             if (tabName === 'statistics') {
                 populateSheetSelector();
+            } else if (tabName === 'dashboard') {
+                loadDashboard();
+            }
+        }
+
+        async function loadDashboard() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+
+            try {
+                const res = await fetch(`${API_URL}/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Update Profile
+                    document.getElementById('dashboard-welcome').textContent = `Welcome, ${data.admin.name}`;
+                    document.getElementById('dashboard-email').textContent = data.admin.email;
+
+                    // Update Summary Cards
+                    document.getElementById('dash-total-students').textContent = data.summary.totalStudents;
+                    document.getElementById('dash-overall-avg').textContent = data.summary.overallAverage;
+                    document.getElementById('dash-active-sections').textContent = data.summary.activeSections;
+
+                    // Update Sections Table
+                    const tbody = document.getElementById('dash-sections-body');
+                    if (data.sections.length > 0) {
+                        tbody.innerHTML = data.sections.map(sec => `
+                            <tr style="border-bottom:1px solid #f1f5f9; hover:background:#f8fafc;">
+                                <td style="padding:1.2rem; font-weight:500;">${sec.name}</td>
+                                <td style="padding:1.2rem; text-align:center;">${sec.totalStudents}</td>
+                                <td style="padding:1.2rem; text-align:center; font-weight:600; color:#3b82f6;">${sec.classAverage}</td>
+                                <td style="padding:1.2rem; text-align:center; color:#10b981;">${sec.highest}</td>
+                                <td style="padding:1.2rem; text-align:center; color:#f43f5e;">${sec.lowest}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:#64748b;">No sections active</td></tr>';
+                    }
+                }
+            } catch (e) {
+                console.error("Dashboard Load Error", e);
             }
         }
 

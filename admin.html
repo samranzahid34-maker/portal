@@ -171,6 +171,119 @@
                     </form>
                 </div>
 
+                <!-- Grading Configuration Panel (Added Request) -->
+                <div id="grading-config-section"
+                    style="display:none; background:white; padding:1.5rem; border-radius:1rem; margin:1.5rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                        <h3 style="margin:0; font-size:1.1rem; color:var(--primary)">⚙️ Grading Rules</h3>
+                        <select id="grading-method" onchange="toggleGradingUI()"
+                            style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:0.5rem; font-family:'Outfit'">
+                            <option value="automatic">Automatic (University Standard)</option>
+                            <option value="percentage-based">Percentage Based</option>
+                            <option value="class-limits">Class Limits (Top N)</option>
+                            <option value="manual">Manual Assignment</option>
+                        </select>
+                    </div>
+
+                    <div id="ui-percentage" style="display:none">
+                        <p style="font-size:0.9rem; color:#64748b; margin-bottom:1rem">Assign grades based on percentage
+                            of marks (out of 55). Enter minimum % for each.</p>
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap:10px">
+                            <div><label style="font-size:0.8rem">A+</label><input type="number" id="p-a-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="90"></div>
+                            <div><label style="font-size:0.8rem">A</label><input type="number" id="p-a"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="85"></div>
+                            <div><label style="font-size:0.8rem">A-</label><input type="number" id="p-a-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="80"></div>
+                            <div><label style="font-size:0.8rem">B+</label><input type="number" id="p-b-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="75"></div>
+                            <div><label style="font-size:0.8rem">B</label><input type="number" id="p-b"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="70"></div>
+                            <div><label style="font-size:0.8rem">B-</label><input type="number" id="p-b-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="65"></div>
+                            <div><label style="font-size:0.8rem">C+</label><input type="number" id="p-c-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="60"></div>
+                            <div><label style="font-size:0.8rem">C</label><input type="number" id="p-c"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="55"></div>
+                            <div><label style="font-size:0.8rem">C-</label><input type="number" id="p-c-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="50"></div>
+                            <div><label style="font-size:0.8rem">D+</label><input type="number" id="p-d-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="45"></div>
+                            <div><label style="font-size:0.8rem">D</label><input type="number" id="p-d"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="40"></div>
+                            <div><label style="font-size:0.8rem">D-</label><input type="number" id="p-d-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="35"></div>
+                            <div><label style="font-size:0.8rem">F</label><input type="number" id="p-f"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="0"></div>
+                        </div>
+                    </div>
+
+                    <div id="ui-limits" style="display:none">
+                        <p style="font-size:0.9rem; color:#64748b; margin-bottom:1rem">Assign grades by Rank. Enter max
+                            students for each grade.</p>
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap:10px">
+                            <div><label style="font-size:0.8rem">A+</label><input type="number" id="l-a-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="2"></div>
+                            <div><label style="font-size:0.8rem">A</label><input type="number" id="l-a"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">A-</label><input type="number" id="l-a-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">B+</label><input type="number" id="l-b-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">B</label><input type="number" id="l-b"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">B-</label><input type="number" id="l-b-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">C+</label><input type="number" id="l-c-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">C</label><input type="number" id="l-c"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">C-</label><input type="number" id="l-c-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">D+</label><input type="number" id="l-d-plus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">D</label><input type="number" id="l-d"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">D-</label><input type="number" id="l-d-minus"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="5"></div>
+                            <div><label style="font-size:0.8rem">F</label><input type="number" id="l-f"
+                                    style="width:100%; border:1px solid #cbd5e1; padding:4px; border-radius:4px"
+                                    placeholder="0"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.5rem; text-align:right">
+                        <button class="btn-primary" onclick="applyGradingRules()">Apply Rules</button>
+                    </div>
+                </div>
+
                 <!-- Grade Distribution Bell Curve -->
                 <div id="grade-distribution-chart" style="display:none; margin: 2rem 0;">
                     <div class="card">
@@ -800,6 +913,7 @@
             // Show the results
             document.getElementById('stats-summary').style.display = 'block';
             document.getElementById('stats-table-container').style.display = 'block';
+            document.getElementById('grading-config-section').style.display = 'block';
             document.getElementById('grade-distribution-chart').style.display = 'block';
 
             // Smooth scroll to results
@@ -996,6 +1110,89 @@
         }
 
         checkAuth();
+
+        function toggleGradingUI() {
+            const method = document.getElementById('grading-method').value;
+            document.getElementById('ui-percentage').style.display = (method === 'percentage-based') ? 'block' : 'none';
+            document.getElementById('ui-limits').style.display = (method === 'class-limits') ? 'block' : 'none';
+        }
+
+        async function applyGradingRules() {
+            const sheetId = document.getElementById('stats-sheet-select').value;
+            if (!sheetId) return alert('Select a sheet first');
+
+            const method = document.getElementById('grading-method').value;
+            const btn = document.querySelector('#grading-config-section button');
+            const originalText = btn.textContent;
+
+            // Build config object
+            const config = {
+                sheetId: sheetId,
+                method: method,
+                ranges: {},
+                limits: {}
+            };
+
+            if (method === 'percentage-based') {
+                config.ranges = {
+                    'A+': parseFloat(document.getElementById('p-a-plus').value) || 0,
+                    'A': parseFloat(document.getElementById('p-a').value) || 0,
+                    'A-': parseFloat(document.getElementById('p-a-minus').value) || 0,
+                    'B+': parseFloat(document.getElementById('p-b-plus').value) || 0,
+                    'B': parseFloat(document.getElementById('p-b').value) || 0,
+                    'B-': parseFloat(document.getElementById('p-b-minus').value) || 0,
+                    'C+': parseFloat(document.getElementById('p-c-plus').value) || 0,
+                    'C': parseFloat(document.getElementById('p-c').value) || 0,
+                    'C-': parseFloat(document.getElementById('p-c-minus').value) || 0,
+                    'D+': parseFloat(document.getElementById('p-d-plus').value) || 0,
+                    'D': parseFloat(document.getElementById('p-d').value) || 0,
+                    'D-': parseFloat(document.getElementById('p-d-minus').value) || 0,
+                    'F': parseFloat(document.getElementById('p-f').value) || 0
+                };
+            } else if (method === 'class-limits') {
+                config.limits = {
+                    'A+': parseInt(document.getElementById('l-a-plus').value) || 0,
+                    'A': parseInt(document.getElementById('l-a').value) || 0,
+                    'A-': parseInt(document.getElementById('l-a-minus').value) || 0,
+                    'B+': parseInt(document.getElementById('l-b-plus').value) || 0,
+                    'B': parseInt(document.getElementById('l-b').value) || 0,
+                    'B-': parseInt(document.getElementById('l-b-minus').value) || 0,
+                    'C+': parseInt(document.getElementById('l-c-plus').value) || 0,
+                    'C': parseInt(document.getElementById('l-c').value) || 0,
+                    'C-': parseInt(document.getElementById('l-c-minus').value) || 0,
+                    'D+': parseInt(document.getElementById('l-d-plus').value) || 0,
+                    'D': parseInt(document.getElementById('l-d').value) || 0,
+                    'D-': parseInt(document.getElementById('l-d-minus').value) || 0,
+                    'F': parseInt(document.getElementById('l-f').value) || 0
+                };
+            }
+
+            try {
+                btn.textContent = 'Calculating...';
+                btn.disabled = true;
+
+                const res = await fetch(`${API_URL}/admin/calculate-grades`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(config)
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    displayStatistics(data.statistics);
+                    // Feedback handled by UI update
+                } else {
+                    alert(data.detail || 'Error calculating grades');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Connection error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
     </script>
 </body>
 

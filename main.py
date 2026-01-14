@@ -273,6 +273,13 @@ class AddSource(BaseModel):
     range: Optional[str] = "Sheet1!A2:Z" # Default to skipping header row
     name: Optional[str] = "" # Friendly name for the sheet
 
+class GradingConfig(BaseModel):
+    sheetId: str
+    method: str = "automatic"
+    ranges: Optional[Dict[str, float]] = None
+    limits: Optional[Dict[str, int]] = None
+
+
 # Helper functions
 def get_db():
     conn = sqlite3.connect(DATABASE_PATH)
@@ -921,6 +928,58 @@ def calculate_relative_grade(score, all_scores, student_index=None):
     else:  # Bottom 5%
         return "F"
 
+def calculate_custom_grade(score, all_scores, config: GradingConfig):
+    if not all_scores or score is None:
+        return "N/A"
+    
+    # 1. Manual (Placeholder - usually handled via direct edits/upload)
+    if config.method == 'manual':
+        # In a real manual system, we'd lookup a stored override.
+        # For now, fallback to relative or return empty to allow UI entry.
+        return calculate_relative_grade(score, all_scores)
+
+    # 2. Percentage Based
+    if config.method == 'percentage-based' and config.ranges:
+        # Check against ranges (e.g., {'A': 80}) meaning >= 80
+        sorted_ranges = sorted(config.ranges.items(), key=lambda x: x[1], reverse=True)
+        
+        # Calculate Percentage (of 55? or 100?)
+        # User implies percentage of course. Current marks max is 55.
+        current_max = 55
+        percentage = (score / current_max) * 100 if current_max > 0 else 0
+        
+        for grade, min_percent in sorted_ranges:
+            if percentage >= min_percent:
+                return grade
+        return "F" # Default if below all ranges
+        
+    # 3. Class Limits
+    elif config.method == 'class-limits' and config.limits:
+        # Need rank
+        sorted_scores = sorted([s for s in all_scores if s is not None], reverse=True)
+        try:
+            rank = sorted_scores.index(score) + 1 # 1-based
+        except ValueError:
+            rank = len(sorted_scores)
+            
+        count = 0
+        ordered_grades = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F']
+        
+        for grade in ordered_grades:
+            limit = config.limits.get(grade, 0)
+            if limit > 0:
+                if rank <= count + limit:
+                    return grade
+                count += limit
+        
+        # If limits exceeded (overflow), assign F or lowest?
+        return "F"
+        
+    # 4. Automatic (Default)
+    else:
+        return calculate_relative_grade(score, all_scores)
+
+
 @app.get("/api/admin/sheet-statistics/{sheet_id}")
 async def get_sheet_statistics(sheet_id: str):
     """
@@ -1074,6 +1133,116 @@ async def get_sheet_statistics(sheet_id: str):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error fetching sheet statistics: {str(e)}")
+
+@app.post("/api/admin/calculate-grades")
+async def calculate_grades_endpoint(config: GradingConfig):
+    """
+    Calculate grades based on custom configuration without modifying original GET endpoint.
+    """
+    try:
+        # Reuse logic from get_sheet_statistics (Duplicated to ensure stability of original)
+        if not sheets_service:
+            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
+        
+        sources = get_sheet_sources()
+        source_config = next((s for s in sources if s[0] == config.sheetId), None)
+        
+        if not source_config:
+            raise HTTPException(status_code=404, detail="Sheet not found")
+        
+        sheet_id, range_val, sheet_name = source_config if len(source_config) == 3 else (*source_config, "Unknown")
+        
+        import re
+        parts = range_val.split("!") if "!" in range_val else ["Sheet1", range_val]
+        sheet_part = parts[0]
+        range_part = parts[1] if len(parts) > 1 else range_val
+        
+        header_row = 1
+        match = re.search(r'([0-9]+)', range_part)
+        if match:
+            data_start_row = int(match.group(1))
+            if data_start_row > 1:
+                header_row = data_start_row - 1
+                
+        header_result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range=f"{sheet_part}!{header_row}:{header_row}"
+        ).execute()
+        header_rows = header_result.get('values', [])
+        headers = header_rows[0][2:] if header_rows and len(header_rows[0]) > 2 else []
+        
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range=range_val
+        ).execute()
+        rows = result.get('values', [])
+        
+        students = []
+        all_totals = []
+        subject_totals = {header: [] for header in headers if header.lower() != 'total'}
+        
+        for row in rows:
+            if row and len(row) >= 2:
+                roll_no = row[0].strip()
+                name = row[1].strip()
+                raw_marks = row[2:]
+                marks_dict = {}
+                total = 0
+                for i, mark in enumerate(raw_marks):
+                    if i < len(headers):
+                        label = headers[i]
+                        try:
+                            mark_value = float(mark.replace('%', '').strip()) if mark else 0
+                            marks_dict[label] = mark_value
+                            if label.lower() != 'total':
+                                subject_totals[label].append(mark_value)
+                                total += mark_value
+                        except:
+                            marks_dict[label] = mark if mark else '-'
+                all_totals.append(total)
+                students.append({'rollNumber': roll_no, 'name': name, 'marks': marks_dict, 'total': total})
+        
+        # Calculate Stats
+        class_average = sum(all_totals) / len(all_totals) if all_totals else 0
+        subject_averages = {k: sum(v)/len(v) for k, v in subject_totals.items() if v}
+        
+        # Assign Custom Grades
+        for student in students:
+            student['grade'] = calculate_custom_grade(student['total'], all_totals, config)
+            current_marks_maximum = 55
+            student['percentage'] = round((student['total'] / current_marks_maximum) * 100, 2) if current_marks_maximum > 0 else 0
+            
+        students.sort(key=lambda x: x['total'], reverse=True)
+        
+        grade_distribution = {}
+        for student in students:
+            grade = student['grade']
+            grade_distribution[grade] = grade_distribution.get(grade, 0) + 1
+            
+        all_grades = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F']
+        for grade in all_grades:
+            if grade not in grade_distribution:
+                grade_distribution[grade] = 0
+                
+        return {
+            "success": True,
+            "sheetName": sheet_name,
+            "students": students,
+            "statistics": {
+                "totalStudents": len(students),
+                "classAverage": round(class_average, 2),
+                "subjectAverages": {k: round(v, 2) for k, v in subject_averages.items()},
+                "highestScore": max(all_totals) if all_totals else 0,
+                "lowestScore": min(all_totals) if all_totals else 0,
+                "headers": headers,
+                "gradeDistribution": grade_distribution,
+                "totalPossibleMarks": 100,
+                "currentMarksTotal": 55
+            }
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error calculating grades: {str(e)}")
+
 
 # Serve static files with absolute path
 current_dir = os.path.dirname(os.path.abspath(__file__))

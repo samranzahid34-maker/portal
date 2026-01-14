@@ -1171,7 +1171,7 @@
                 btn.textContent = 'Calculating...';
                 btn.disabled = true;
 
-                const res = await fetch(`${API_URL}/admin/calculate-grades`, {
+                const res = await fetch(`${API_URL}/calculate-grades`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(config)

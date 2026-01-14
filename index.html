@@ -236,7 +236,11 @@
                         tableHTML += `
                             <tr>
                                 <th class="total-header">Obtained Marks</th>
-                                <td class="total-cell"><strong>${s.total || 0}</strong></td>
+                                <td class="total-cell"><strong>${s.total ? s.total.toFixed(2) : 0}</strong></td>
+                            </tr>
+                            <tr>
+                                <th style="background:#f8fafc; color:#475569; padding: 1rem; border-bottom: 2px solid #e2e8f0;">Class Average</th>
+                                <td style="background:#f8fafc; color:#475569; font-weight: 600; padding: 1rem; border: 1px solid #e2e8f0;">${s.classAverage || 'N/A'}</td>
                             </tr>
                         `;
                     } else {

@@ -615,37 +615,43 @@ async def get_marks(roll_number: str):
                 ).execute()
                 rows = result.get('values', [])
                 
+                # Loop through all rows to calculate class stats AND find student
+                sheet_totals = []
+                found_student_payload = None
+                
                 for row in rows:
                     if row and len(row) >= 2:
+                        # 1. Calculate Total for this row (for Class Average)
+                        current_row_total = 0
+                        current_raw_marks = row[2:]
+                        for i, m in enumerate(current_raw_marks):
+                            if i < len(headers):
+                                label = headers[i]
+                                if label.lower() != 'total':
+                                    try:
+                                        if m:
+                                            current_row_total += float(m.replace('%','').strip())
+                                    except: pass
+                        
+                        sheet_totals.append(current_row_total)
+
+                        # 2. Check if this is the student
                         row_roll = row[0].strip()
-                        # Case insensitive match for maximum robustness
                         if row_roll.lower() == roll_number.lower():
                             student_name = row[1].strip()
                             
-                            # Build marks dictionary
-                            marks_dict = {"rollNumber": row_roll, "name": student_name}
+                            # Build marks objects
+                            marks_dict = {"rollNumber": row_roll, "name": student_name, "Total": current_row_total}
                             marks_array = []
-                            raw_marks = row[2:]
-
-                            total = 0
-                            for i, mark in enumerate(raw_marks):
+                            
+                            for i, mark in enumerate(current_raw_marks):
                                 if i < len(headers):
                                     label = headers[i]
                                     value = mark if mark else '-'
                                     marks_dict[label] = value
                                     marks_array.append({"label": label, "value": value})
-                                    try:
-                                        if mark and label.lower() != 'total':
-                                            total += float(mark.replace('%','').strip())
-                                    except: pass
-
-                            # Check if Total is explicitly in sheet, else use calc
-                            # But usually we just return what we calculated or found?
-                            # Let's trust the calculation for consistency, or map 'Total' from sheet if present?
-                            # Sticking to current logic: Calc Total
-                            marks_dict["Total"] = total
-
-                            return {
+                            
+                            found_student_payload = {
                                 "success": True,
                                 "marks": marks_dict,
                                 "student": {
@@ -653,9 +659,16 @@ async def get_marks(roll_number: str):
                                     "name": student_name,
                                     "sheetName": name,
                                     "marks": marks_array,
-                                    "total": total
+                                    "total": current_row_total
                                 }
                             }
+                
+                if found_student_payload:
+                    # Calculate Class Average
+                    class_avg = sum(sheet_totals) / len(sheet_totals) if sheet_totals else 0
+                    found_student_payload["classAverage"] = round(class_avg, 2)
+                    found_student_payload["student"]["classAverage"] = round(class_avg, 2)
+                    return found_student_payload
             except Exception as e:
                 print(f"Error reading sheet {name}: {e}")
                 # Store friendly error

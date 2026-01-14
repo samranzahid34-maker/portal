@@ -659,17 +659,29 @@
 
             try {
                 const res = await fetch(`${API_URL}/sheet-statistics/${encodeURIComponent(sheetId)}`);
+
+                // Check if response is OK
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error('API Error Response:', errorText);
+                    alert(`Failed to load statistics (${res.status}): ${errorText}`);
+                    return;
+                }
+
                 const data = await res.json();
+                console.log('Statistics data:', data);
 
                 if (data.success) {
                     currentStatsData = data; // Store for export
                     displayStatistics(data);
                 } else {
-                    alert('Failed to load statistics: ' + (data.detail || 'Unknown error'));
+                    const errorMsg = data.detail || data.message || 'Unknown error';
+                    console.error('API returned error:', data);
+                    alert('Failed to load statistics: ' + errorMsg);
                 }
             } catch (e) {
                 console.error('Error loading statistics:', e);
-                alert('Error loading statistics. Please try again.');
+                alert('Error loading statistics: ' + e.message + '. Please check console for details.');
             }
         }
 

@@ -1082,7 +1082,8 @@ public_path = os.path.join(current_dir, "public")
 if os.path.exists(public_path):
     app.mount("/public", StaticFiles(directory=public_path), name="public")
 else:
-    print(f"Warning: Public directory not found at {public_path}")
+    print(f"Warning: Public directory not found at {public_path}. Using current directory as fallback.")
+    public_path = current_dir
 
 @app.get("/")
 async def read_root():

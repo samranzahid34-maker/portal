@@ -1162,8 +1162,13 @@ async def calculate_grades_endpoint(config: GradingConfig):
         
         if not source_config:
             raise HTTPException(status_code=404, detail="Sheet not found")
-        
-        sheet_id, range_val, sheet_name = source_config if len(source_config) == 3 else (*source_config, "Unknown")
+            
+        # Unpack explicitly - safer
+        if len(source_config) == 3:
+            sheet_id, range_val, sheet_name = source_config
+        else:
+            sheet_id, range_val = source_config
+            sheet_name = "Unknown"
         
         import re
         parts = range_val.split("!") if "!" in range_val else ["Sheet1", range_val]

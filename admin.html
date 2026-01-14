@@ -103,6 +103,7 @@
         <aside class="sidebar">
             <a href="#" class="sidebar-link active" onclick="switchTab('sources', this)">Sheets Source</a>
             <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
+            <a href="#" class="sidebar-link" onclick="switchTab('statistics', this)">Class Statistics & Grades</a>
             <button onclick="refreshData()" class="btn-primary"
                 style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem">↻ Refresh Data</button>
             <!-- <a href="#" class="sidebar-link">Settings</a> -->
@@ -149,6 +150,90 @@
                     </form>
                 </div>
                 <div id="result-display" style="margin-top: 2rem;"></div>
+            </div>
+
+            <!-- TAB 3: CLASS STATISTICS & GRADES -->
+            <div id="tab-statistics" style="display:none">
+                <h2>Class Statistics & Relative Grades</h2>
+                <p style="color: #64748b; margin-bottom: 1.5rem;">View class performance, averages, and automatically
+                    assigned grades based on relative marking</p>
+
+                <div class="card" style="max-width: 600px; margin: 1rem 0;">
+                    <form onsubmit="loadClassStatistics(event)">
+                        <div class="input-group">
+                            <label>Select Marksheet</label>
+                            <select id="stats-sheet-select" required
+                                style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-family: 'Outfit', sans-serif; font-size: 1rem;">
+                                <option value="">-- Choose a sheet --</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary">View Statistics</button>
+                    </form>
+                </div>
+
+                <!-- Statistics Summary Cards -->
+                <div id="stats-summary" style="display:none; margin: 2rem 0;">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div class="card"
+                            style="text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Total Students</div>
+                            <div id="stat-total" style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                        </div>
+                        <div class="card"
+                            style="text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Class Average</div>
+                            <div id="stat-average" style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;">0
+                            </div>
+                        </div>
+                        <div class="card"
+                            style="text-align: center; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Highest Score</div>
+                            <div id="stat-highest" style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;">0
+                            </div>
+                        </div>
+                        <div class="card"
+                            style="text-align: center; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                            <div style="font-size: 0.9rem; opacity: 0.9;">Lowest Score</div>
+                            <div id="stat-lowest" style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Subject Averages -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary);">Subject-wise Averages</h3>
+                        <div id="subject-averages"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Results Table -->
+                <div id="stats-table-container" style="display:none;">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="color: var(--primary);">Student Results with Relative Grades</h3>
+                            <button onclick="exportToCSV()" class="btn-secondary"
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">📥 Export CSV</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table id="stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                <thead style="background: #f8fafc; position: sticky; top: 0;">
+                                    <tr id="stats-table-header">
+                                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">
+                                            Rank</th>
+                                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">
+                                            Roll Number</th>
+                                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">
+                                            Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stats-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -515,12 +600,221 @@
         function switchTab(tabName, linkElement) {
             document.getElementById('tab-sources').style.display = tabName === 'sources' ? 'block' : 'none';
             document.getElementById('tab-results').style.display = tabName === 'results' ? 'block' : 'none';
+            document.getElementById('tab-statistics').style.display = tabName === 'statistics' ? 'block' : 'none';
 
             // Update Sidebar Active State
             if (linkElement) {
                 document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
                 linkElement.classList.add('active');
             }
+
+            // Load sheet options when statistics tab is opened
+            if (tabName === 'statistics') {
+                populateSheetSelector();
+            }
+        }
+
+        let currentStatsData = null; // Store current statistics data for export
+
+        async function populateSheetSelector() {
+            try {
+                const res = await fetch(`${API_URL}/sources`);
+                const data = await res.json();
+
+                const select = document.getElementById('stats-sheet-select');
+                select.innerHTML = '<option value="">-- Choose a sheet --</option>';
+
+                if (data.success && data.sources) {
+                    data.sources.forEach(source => {
+                        const option = document.createElement('option');
+                        option.value = source.sheetId;
+                        option.textContent = source.name || source.sheetId.substring(0, 20) + '...';
+                        select.appendChild(option);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load sheets:', e);
+            }
+        }
+
+        async function loadClassStatistics(e) {
+            e.preventDefault();
+
+            const sheetId = document.getElementById('stats-sheet-select').value;
+            if (!sheetId) {
+                alert('Please select a marksheet');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('stats-summary').style.display = 'none';
+            document.getElementById('stats-table-container').style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/sheet-statistics/${encodeURIComponent(sheetId)}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    currentStatsData = data; // Store for export
+                    displayStatistics(data);
+                } else {
+                    alert('Failed to load statistics: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error('Error loading statistics:', e);
+                alert('Error loading statistics. Please try again.');
+            }
+        }
+
+        function displayStatistics(data) {
+            const { students, statistics, sheetName } = data;
+
+            // Update summary cards
+            document.getElementById('stat-total').textContent = statistics.totalStudents;
+            document.getElementById('stat-average').textContent = statistics.classAverage.toFixed(2);
+            document.getElementById('stat-highest').textContent = statistics.highestScore.toFixed(2);
+            document.getElementById('stat-lowest').textContent = statistics.lowestScore.toFixed(2);
+
+            // Display subject averages
+            const subjectAvgContainer = document.getElementById('subject-averages');
+            subjectAvgContainer.innerHTML = '';
+
+            for (const [subject, avg] of Object.entries(statistics.subjectAverages)) {
+                const subjectCard = document.createElement('div');
+                subjectCard.style.cssText = 'padding: 1rem; background: #f8fafc; border-radius: 0.5rem; text-align: center;';
+                subjectCard.innerHTML = `
+                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">${subject}</div>
+                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary);">${avg.toFixed(2)}</div>
+                `;
+                subjectAvgContainer.appendChild(subjectCard);
+            }
+
+            // Build table header dynamically
+            const tableHeader = document.getElementById('stats-table-header');
+            tableHeader.innerHTML = `
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Rank</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Roll Number</th>
+                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Name</th>
+            `;
+
+            // Add subject columns
+            statistics.headers.forEach(header => {
+                if (header.toLowerCase() !== 'total') {
+                    tableHeader.innerHTML += `<th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0;">${header}</th>`;
+                }
+            });
+
+            // Add total, percentage, and grade columns
+            tableHeader.innerHTML += `
+                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700;">Total</th>
+                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700;">%</th>
+                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700;">Grade</th>
+            `;
+
+            // Build table body
+            const tableBody = document.getElementById('stats-table-body');
+            tableBody.innerHTML = '';
+
+            students.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.style.cssText = 'border-bottom: 1px solid #e2e8f0; transition: background 0.2s;';
+                row.onmouseenter = () => row.style.background = '#f8fafc';
+                row.onmouseleave = () => row.style.background = 'white';
+
+                // Rank badge with medal for top 3
+                let rankDisplay = index + 1;
+                if (index === 0) rankDisplay = '🥇 1';
+                else if (index === 1) rankDisplay = '🥈 2';
+                else if (index === 2) rankDisplay = '🥉 3';
+
+                let rowHTML = `
+                    <td style="padding: 1rem; font-weight: 600;">${rankDisplay}</td>
+                    <td style="padding: 1rem; color: #64748b;">${student.rollNumber}</td>
+                    <td style="padding: 1rem; font-weight: 500;">${student.name}</td>
+                `;
+
+                // Add subject marks
+                statistics.headers.forEach(header => {
+                    if (header.toLowerCase() !== 'total') {
+                        const mark = student.marks[header] !== undefined ? student.marks[header] : '-';
+                        rowHTML += `<td style="padding: 1rem; text-align: center;">${mark}</td>`;
+                    }
+                });
+
+                // Grade color coding
+                const gradeColors = {
+                    'A+': '#10b981', 'A': '#22c55e',
+                    'B+': '#3b82f6', 'B': '#60a5fa',
+                    'C+': '#f59e0b', 'C': '#fbbf24',
+                    'D': '#ef4444', 'F': '#dc2626'
+                };
+                const gradeColor = gradeColors[student.grade] || '#64748b';
+
+                rowHTML += `
+                    <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--primary);">${student.total.toFixed(2)}</td>
+                    <td style="padding: 1rem; text-align: center; font-weight: 600;">${student.percentage}%</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <span style="background: ${gradeColor}; color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.9rem;">
+                            ${student.grade}
+                        </span>
+                    </td>
+                `;
+
+                row.innerHTML = rowHTML;
+                tableBody.appendChild(row);
+            });
+
+            // Show the results
+            document.getElementById('stats-summary').style.display = 'block';
+            document.getElementById('stats-table-container').style.display = 'block';
+
+            // Smooth scroll to results
+            document.getElementById('stats-summary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function exportToCSV() {
+            if (!currentStatsData) {
+                alert('No data to export');
+                return;
+            }
+
+            const { students, statistics, sheetName } = currentStatsData;
+
+            // Build CSV content
+            let csv = 'Rank,Roll Number,Name,';
+
+            // Add subject headers
+            statistics.headers.forEach(header => {
+                if (header.toLowerCase() !== 'total') {
+                    csv += `${header},`;
+                }
+            });
+            csv += 'Total,Percentage,Grade\n';
+
+            // Add student data
+            students.forEach((student, index) => {
+                csv += `${index + 1},${student.rollNumber},${student.name},`;
+
+                statistics.headers.forEach(header => {
+                    if (header.toLowerCase() !== 'total') {
+                        const mark = student.marks[header] !== undefined ? student.marks[header] : '-';
+                        csv += `${mark},`;
+                    }
+                });
+
+                csv += `${student.total.toFixed(2)},${student.percentage},${student.grade}\n`;
+            });
+
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${sheetName || 'class'}_statistics_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
 
         checkAuth();

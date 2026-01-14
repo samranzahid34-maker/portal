@@ -839,6 +839,177 @@ async def get_sources():
     data = [{"sheetId": s[0], "range": s[1], "name": s[2] if len(s) > 2 else s[0][:15] + "..."} for s in sources]
     return {"success": True, "sources": data}
 
+def calculate_relative_grade(percentage, all_percentages):
+    """
+    Calculate relative grade based on university marking system
+    Uses percentile-based grading (relative to class performance)
+    """
+    if not all_percentages or percentage is None:
+        return "N/A"
+    
+    # Sort all percentages to find percentile
+    sorted_scores = sorted([p for p in all_percentages if p is not None], reverse=True)
+    
+    if not sorted_scores:
+        return "N/A"
+    
+    # Find percentile rank
+    rank = sorted_scores.index(percentage) if percentage in sorted_scores else len(sorted_scores)
+    percentile = (1 - (rank / len(sorted_scores))) * 100
+    
+    # Relative grading based on percentile
+    if percentile >= 90:
+        return "A+"
+    elif percentile >= 80:
+        return "A"
+    elif percentile >= 70:
+        return "B+"
+    elif percentile >= 60:
+        return "B"
+    elif percentile >= 50:
+        return "C+"
+    elif percentile >= 40:
+        return "C"
+    elif percentile >= 30:
+        return "D"
+    else:
+        return "F"
+
+@app.get("/api/admin/sheet-statistics/{sheet_id}")
+async def get_sheet_statistics(sheet_id: str):
+    """
+    Get all students from a specific sheet with class statistics and relative grades
+    """
+    try:
+        if not sheets_service:
+            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
+        
+        # Find the source configuration
+        sources = get_sheet_sources()
+        source_config = None
+        
+        for source in sources:
+            if source[0] == sheet_id:
+                source_config = source
+                break
+        
+        if not source_config:
+            raise HTTPException(status_code=404, detail="Sheet not found in configured sources")
+        
+        sheet_id, range_val, sheet_name = source_config if len(source_config) == 3 else (*source_config, "Unknown")
+        
+        # Get header row
+        header_row = 1
+        sheet_part = "Sheet1"
+        
+        if "!" in range_val:
+            parts = range_val.split("!")
+            sheet_part = parts[0]
+            range_part = parts[1]
+        else:
+            range_part = range_val
+        
+        # Find start row number in range
+        import re
+        match = re.search(r'([0-9]+)', range_part)
+        if match:
+            data_start_row = int(match.group(1))
+            if data_start_row > 1:
+                header_row = data_start_row - 1
+        
+        header_range = f"{sheet_part}!{header_row}:{header_row}"
+        
+        # Get headers
+        header_result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=header_range
+        ).execute()
+        header_rows = header_result.get('values', [])
+        headers = header_rows[0][2:] if header_rows and len(header_rows[0]) > 2 else []
+        
+        # Get all student data
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=range_val
+        ).execute()
+        rows = result.get('values', [])
+        
+        students = []
+        all_totals = []
+        subject_totals = {header: [] for header in headers if header.lower() != 'total'}
+        
+        # First pass: collect all data
+        for row in rows:
+            if row and len(row) >= 2:
+                roll_no = row[0].strip()
+                name = row[1].strip()
+                raw_marks = row[2:]
+                
+                marks_dict = {}
+                total = 0
+                
+                for i, mark in enumerate(raw_marks):
+                    if i < len(headers):
+                        label = headers[i]
+                        try:
+                            # Try to parse as number
+                            mark_value = float(mark.replace('%', '').strip()) if mark else 0
+                            marks_dict[label] = mark_value
+                            
+                            # Add to subject totals for average calculation
+                            if label.lower() != 'total':
+                                subject_totals[label].append(mark_value)
+                                total += mark_value
+                        except:
+                            marks_dict[label] = mark if mark else '-'
+                
+                # Store total for relative grading
+                all_totals.append(total)
+                
+                students.append({
+                    'rollNumber': roll_no,
+                    'name': name,
+                    'marks': marks_dict,
+                    'total': total
+                })
+        
+        # Calculate class averages
+        class_average = sum(all_totals) / len(all_totals) if all_totals else 0
+        subject_averages = {}
+        
+        for subject, values in subject_totals.items():
+            if values:
+                subject_averages[subject] = sum(values) / len(values)
+        
+        # Second pass: assign relative grades
+        for student in students:
+            student['grade'] = calculate_relative_grade(student['total'], all_totals)
+            student['percentage'] = round((student['total'] / sum(subject_averages.values())) * 100, 2) if subject_averages else 0
+        
+        # Sort students by total (highest first)
+        students.sort(key=lambda x: x['total'], reverse=True)
+        
+        return {
+            "success": True,
+            "sheetName": sheet_name,
+            "students": students,
+            "statistics": {
+                "totalStudents": len(students),
+                "classAverage": round(class_average, 2),
+                "subjectAverages": {k: round(v, 2) for k, v in subject_averages.items()},
+                "highestScore": max(all_totals) if all_totals else 0,
+                "lowestScore": min(all_totals) if all_totals else 0,
+                "headers": headers
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error fetching sheet statistics: {str(e)}")
+
 # Serve static files with absolute path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 public_path = os.path.join(current_dir, "public")

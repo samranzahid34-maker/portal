@@ -326,7 +326,7 @@
 
                     <!-- Student Results Table -->
                     <div id="stats-table-container" style="display:none;">
-                        <div class="card">
+                        <div class="card" style="max-width: 100%; padding: 1.5rem;">
                             <div
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                 <h3 style="color: var(--primary);">Student Results with Relative Grades</h3>
@@ -335,7 +335,7 @@
                             </div>
                             <div style="overflow-x: auto;">
                                 <table id="stats-table"
-                                    style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                                    style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                                     <thead style="background: #f8fafc; position: sticky; top: 0;">
                                         <tr id="stats-table-header">
                                             <th
@@ -819,23 +819,23 @@
             // Build table header dynamically - COMPACT VERSION
             const tableHeader = document.getElementById('stats-table-header');
             tableHeader.innerHTML = `
-                <th style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">Rank</th>
-                <th style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 80px;">Roll No</th>
-                <th style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 100px;">Name</th>
+                <th style="padding: 1rem 0.5rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem;">Rank</th>
+                <th style="padding: 1rem 0.5rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem; min-width: 100px;">Roll No</th>
+                <th style="padding: 1rem 0.5rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem; min-width: 150px;">Name</th>
             `;
 
             // Add subject columns - COMPACT
             statistics.headers.forEach(header => {
                 if (header.toLowerCase() !== 'total') {
-                    tableHeader.innerHTML += `<th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">${header}</th>`;
+                    tableHeader.innerHTML += `<th style="padding: 1rem 0.5rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem;">${header}</th>`;
                 }
             });
 
             // Add total, percentage, and grade columns - COMPACT
             tableHeader.innerHTML += `
-                <th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.7rem;">Total</th>
-                <th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.7rem;">%</th>
-                <th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.7rem;">Grade</th>
+                <th style="padding: 1rem 0.5rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.9rem;">Total</th>
+                <th style="padding: 1rem 0.5rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.9rem;">%</th>
+                <th style="padding: 1rem 0.5rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.9rem;">Grade</th>
             `;
 
             // Build table body
@@ -856,16 +856,16 @@
                 else rankDisplay = index + 1;
 
                 let rowHTML = `
-                    <td style="padding: 0.5rem 0.3rem; font-weight: 600; font-size: 0.75rem;">${rankDisplay}</td>
-                    <td style="padding: 0.5rem 0.3rem; color: #64748b; font-size: 0.7rem;">${student.rollNumber}</td>
-                    <td style="padding: 0.5rem 0.3rem; font-weight: 500; font-size: 0.75rem;">${student.name}</td>
+                    <td style="padding: 1rem 0.5rem; font-weight: 600; font-size: 0.9rem;">${rankDisplay}</td>
+                    <td style="padding: 1rem 0.5rem; color: #64748b; font-size: 0.9rem;">${student.rollNumber}</td>
+                    <td style="padding: 1rem 0.5rem; font-weight: 500; font-size: 0.9rem;">${student.name}</td>
                 `;
 
                 // Add subject marks - COMPACT
                 statistics.headers.forEach(header => {
                     if (header.toLowerCase() !== 'total') {
                         const mark = student.marks[header] !== undefined ? student.marks[header] : '-';
-                        rowHTML += `<td style="padding: 0.5rem 0.2rem; text-align: center; font-size: 0.7rem;">${mark}</td>`;
+                        rowHTML += `<td style="padding: 1rem 0.5rem; text-align: center; font-size: 0.9rem;">${mark}</td>`;
                     }
                 });
 
@@ -897,10 +897,10 @@
                 const gradeColor = gradeColors[student.grade] || '#64748b';
 
                 rowHTML += `
-                    <td style="padding: 0.5rem 0.2rem; text-align: center; font-weight: 700; color: var(--primary); font-size: 0.75rem;">${student.total.toFixed(2)}</td>
-                    <td style="padding: 0.5rem 0.2rem; text-align: center; font-weight: 600; font-size: 0.75rem;">${student.percentage}%</td>
-                    <td style="padding: 0.5rem 0.2rem; text-align: center;">
-                        <span style="background: ${gradeColor}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.3rem; font-weight: 700; font-size: 0.7rem;">
+                    <td style="padding: 1rem 0.5rem; text-align: center; font-weight: 700; color: var(--primary); font-size: 0.9rem;">${student.total.toFixed(2)}</td>
+                    <td style="padding: 1rem 0.5rem; text-align: center; font-weight: 600; font-size: 0.9rem;">${student.percentage}%</td>
+                    <td style="padding: 1rem 0.5rem; text-align: center;">
+                        <span style="background: ${gradeColor}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.3rem; font-weight: 700; font-size: 0.9rem;">
                             ${student.grade}
                         </span>
                     </td>

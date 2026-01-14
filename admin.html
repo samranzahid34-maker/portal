@@ -844,6 +844,9 @@
                 }
             } catch (e) {
                 console.error("Dashboard Load Error", e);
+                document.getElementById('dashboard-email').textContent = 'System Error';
+                document.getElementById('dash-total-students').innerHTML = '<span style="color:#f87171; font-size:1.5rem">Error</span>';
+                document.getElementById('dash-sections-body').innerHTML = `<tr><td colspan="5" style="padding:2rem; text-align:center; color:#ef4444;">Failed to load data. Please refresh or check logs.</td></tr>`;
             }
         }
 

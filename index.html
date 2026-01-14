@@ -214,46 +214,58 @@
 
                     const container = document.getElementById('marks-container');
 
-                    // Create vertical list table (Transposed view)
-                    let tableHTML = `
-                        <div class="marks-table-wrapper">
-                            <table class="marks-table">
-                                <tbody>
+
+
+                    // Create Split Layout (Table Left, Average Right)
+                    let htmlContent = `
+                        <div class="results-layout" style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+                            <!-- Left Side: Marks Table (Takes available space) -->
+                            <div style="flex: 1; min-width: 300px;">
+                                <div class="marks-table-wrapper">
+                                    <table class="marks-table">
+                                        <tbody>
                     `;
 
-                    // Add rows dynamically (Label | Value)
+                    // Add rows dynamically
                     if (Array.isArray(s.marks) && s.marks.length > 0) {
                         s.marks.forEach(item => {
-                            tableHTML += `
+                            htmlContent += `
                                 <tr>
                                     <th style="width: 60%;">${item.label}</th>
-                                    <td>${item.value}</td> <!-- Value on Right -->
+                                    <td>${item.value}</td>
                                 </tr>
                             `;
                         });
 
-                        // Total Row
-                        tableHTML += `
+                        // Total Row (Inside Table)
+                        htmlContent += `
                             <tr>
                                 <th class="total-header">Obtained Marks</th>
                                 <td class="total-cell"><strong>${s.total ? s.total.toFixed(2) : 0}</strong></td>
                             </tr>
-                            <tr>
-                                <th style="background:#f8fafc; color:#475569; padding: 1rem; border-bottom: 2px solid #e2e8f0;">Class Average</th>
-                                <td style="background:#f8fafc; color:#475569; font-weight: 600; padding: 1rem; border: 1px solid #e2e8f0;">${s.classAverage || 'N/A'}</td>
-                            </tr>
                         `;
                     } else {
-                        tableHTML += `<tr><td colspan="2">No marks found</td></tr>`;
+                        htmlContent += `<tr><td colspan="2">No marks found</td></tr>`;
                     }
 
-                    tableHTML += `
-                                </tbody>
-                            </table>
+                    htmlContent += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Right Side: Class Average Box -->
+                            <div style="flex: 0 0 280px; min-width: 250px;">
+                                <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); color: white; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4); border-radius: 1rem; margin-top: 0;">
+                                    <div style="font-size: 0.9rem; font-weight: 500; opacity: 0.9; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">Overall Class<br>Average Marks</div>
+                                    <div style="font-size: 3.5rem; font-weight: 800; line-height: 1;">${s.classAverage || 0}</div>
+                                    <div style="margin-top: 1rem; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; width: 50%; margin-left: auto; margin-right: auto;"></div>
+                                </div>
+                            </div>
                         </div>
                     `;
 
-                    container.innerHTML = tableHTML;
+                    container.innerHTML = htmlContent;
                 } else {
                     document.getElementById('marks-container').innerHTML = `
                         <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px; margin-top: 1rem;">

@@ -171,6 +171,26 @@
                     </form>
                 </div>
 
+                <!-- Grade Distribution Bell Curve -->
+                <div id="grade-distribution-chart" style="display:none; margin: 2rem 0;">
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem; color: var(--primary);">📊 Grade Distribution</h3>
+                        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;">Visual representation of
+                            how grades are distributed across the class</p>
+                        <div id="bell-curve-container"
+                            style="display: flex; align-items: flex-end; justify-content: space-around; gap: 0.5rem; height: 200px; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+                            <!-- Bars will be inserted here by JavaScript -->
+                        </div>
+                        <div
+                            style="margin-top: 1rem; padding: 1rem; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 0.5rem;">
+                            <strong style="color: #92400e;">Note:</strong>
+                            <span style="color: #78350f; font-size: 0.9rem;">Current marks are out of <span
+                                    id="current-total-marks">55</span> (Total course: 100 marks including 45 marks for
+                                final exam)</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Statistics Summary Cards -->
                 <div id="stats-summary" style="display:none; margin: 2rem 0;">
                     <div
@@ -218,14 +238,17 @@
                                 style="padding: 0.5rem 1rem; font-size: 0.9rem;">📥 Export CSV</button>
                         </div>
                         <div style="overflow-x: auto;">
-                            <table id="stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <table id="stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
                                 <thead style="background: #f8fafc; position: sticky; top: 0;">
                                     <tr id="stats-table-header">
-                                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">
+                                        <th
+                                            style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">
                                             Rank</th>
-                                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">
-                                            Roll Number</th>
-                                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">
+                                        <th
+                                            style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 80px;">
+                                            Roll No</th>
+                                        <th
+                                            style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 100px;">
                                             Name</th>
                                     </tr>
                                 </thead>
@@ -675,6 +698,14 @@
             document.getElementById('stat-highest').textContent = statistics.highestScore.toFixed(2);
             document.getElementById('stat-lowest').textContent = statistics.lowestScore.toFixed(2);
 
+            // Update current marks total in note
+            if (statistics.currentMarksTotal) {
+                document.getElementById('current-total-marks').textContent = statistics.currentMarksTotal;
+            }
+
+            // Display grade distribution bell curve
+            displayGradeDistribution(statistics.gradeDistribution, statistics.totalStudents);
+
             // Display subject averages
             const subjectAvgContainer = document.getElementById('subject-averages');
             subjectAvgContainer.innerHTML = '';
@@ -689,26 +720,26 @@
                 subjectAvgContainer.appendChild(subjectCard);
             }
 
-            // Build table header dynamically
+            // Build table header dynamically - COMPACT VERSION
             const tableHeader = document.getElementById('stats-table-header');
             tableHeader.innerHTML = `
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Rank</th>
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Roll Number</th>
-                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e2e8f0;">Name</th>
+                <th style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">Rank</th>
+                <th style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 80px;">Roll No</th>
+                <th style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 100px;">Name</th>
             `;
 
-            // Add subject columns
+            // Add subject columns - COMPACT
             statistics.headers.forEach(header => {
                 if (header.toLowerCase() !== 'total') {
-                    tableHeader.innerHTML += `<th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0;">${header}</th>`;
+                    tableHeader.innerHTML += `<th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">${header}</th>`;
                 }
             });
 
-            // Add total, percentage, and grade columns
+            // Add total, percentage, and grade columns - COMPACT
             tableHeader.innerHTML += `
-                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700;">Total</th>
-                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700;">%</th>
-                <th style="padding: 1rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700;">Grade</th>
+                <th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.7rem;">Total</th>
+                <th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.7rem;">%</th>
+                <th style="padding: 0.5rem 0.2rem; text-align: center; border-bottom: 2px solid #e2e8f0; font-weight: 700; font-size: 0.7rem;">Grade</th>
             `;
 
             // Build table body
@@ -723,21 +754,22 @@
 
                 // Rank badge with medal for top 3
                 let rankDisplay = index + 1;
-                if (index === 0) rankDisplay = '🥇 1';
-                else if (index === 1) rankDisplay = '🥈 2';
-                else if (index === 2) rankDisplay = '🥉 3';
+                if (index === 0) rankDisplay = '🥇';
+                else if (index === 1) rankDisplay = '🥈';
+                else if (index === 2) rankDisplay = '🥉';
+                else rankDisplay = index + 1;
 
                 let rowHTML = `
-                    <td style="padding: 1rem; font-weight: 600;">${rankDisplay}</td>
-                    <td style="padding: 1rem; color: #64748b;">${student.rollNumber}</td>
-                    <td style="padding: 1rem; font-weight: 500;">${student.name}</td>
+                    <td style="padding: 0.5rem 0.3rem; font-weight: 600; font-size: 0.75rem;">${rankDisplay}</td>
+                    <td style="padding: 0.5rem 0.3rem; color: #64748b; font-size: 0.7rem;">${student.rollNumber}</td>
+                    <td style="padding: 0.5rem 0.3rem; font-weight: 500; font-size: 0.75rem;">${student.name}</td>
                 `;
 
-                // Add subject marks
+                // Add subject marks - COMPACT
                 statistics.headers.forEach(header => {
                     if (header.toLowerCase() !== 'total') {
                         const mark = student.marks[header] !== undefined ? student.marks[header] : '-';
-                        rowHTML += `<td style="padding: 1rem; text-align: center;">${mark}</td>`;
+                        rowHTML += `<td style="padding: 0.5rem 0.2rem; text-align: center; font-size: 0.7rem;">${mark}</td>`;
                     }
                 });
 
@@ -769,10 +801,10 @@
                 const gradeColor = gradeColors[student.grade] || '#64748b';
 
                 rowHTML += `
-                    <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--primary);">${student.total.toFixed(2)}</td>
-                    <td style="padding: 1rem; text-align: center; font-weight: 600;">${student.percentage}%</td>
-                    <td style="padding: 1rem; text-align: center;">
-                        <span style="background: ${gradeColor}; color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.9rem;">
+                    <td style="padding: 0.5rem 0.2rem; text-align: center; font-weight: 700; color: var(--primary); font-size: 0.75rem;">${student.total.toFixed(2)}</td>
+                    <td style="padding: 0.5rem 0.2rem; text-align: center; font-weight: 600; font-size: 0.75rem;">${student.percentage}%</td>
+                    <td style="padding: 0.5rem 0.2rem; text-align: center;">
+                        <span style="background: ${gradeColor}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.3rem; font-weight: 700; font-size: 0.7rem;">
                             ${student.grade}
                         </span>
                     </td>
@@ -785,9 +817,81 @@
             // Show the results
             document.getElementById('stats-summary').style.display = 'block';
             document.getElementById('stats-table-container').style.display = 'block';
+            document.getElementById('grade-distribution-chart').style.display = 'block';
 
             // Smooth scroll to results
             document.getElementById('stats-summary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayGradeDistribution(gradeDistribution, totalStudents) {
+            const container = document.getElementById('bell-curve-container');
+            container.innerHTML = '';
+
+            // Grade order for display
+            const gradeOrder = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'];
+
+            // Grade colors matching the table
+            const gradeColors = {
+                'A+': '#059669', 'A': '#10b981', 'A-': '#34d399',
+                'B+': '#2563eb', 'B': '#3b82f6', 'B-': '#60a5fa',
+                'C+': '#d97706', 'C': '#f59e0b', 'C-': '#fbbf24',
+                'D+': '#dc2626', 'D': '#ef4444', 'D-': '#f87171',
+                'F': '#991b1b'
+            };
+
+            // Find max count for scaling
+            const maxCount = Math.max(...Object.values(gradeDistribution), 1);
+
+            gradeOrder.forEach(grade => {
+                const count = gradeDistribution[grade] || 0;
+                const percentage = totalStudents > 0 ? ((count / totalStudents) * 100).toFixed(1) : 0;
+                const height = maxCount > 0 ? (count / maxCount) * 150 : 0; // Max height 150px
+
+                const bar = document.createElement('div');
+                bar.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.5rem;
+                    flex: 1;
+                    min-width: 40px;
+                `;
+
+                bar.innerHTML = `
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #64748b;">${count}</div>
+                    <div style="
+                        width: 100%;
+                        height: ${height}px;
+                        background: ${gradeColors[grade]};
+                        border-radius: 0.25rem 0.25rem 0 0;
+                        transition: all 0.3s;
+                        cursor: pointer;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    " title="${count} students (${percentage}%)"></div>
+                    <div style="
+                        font-size: 0.7rem;
+                        font-weight: 700;
+                        color: ${gradeColors[grade]};
+                        padding: 0.2rem 0.4rem;
+                        background: white;
+                        border-radius: 0.25rem;
+                        border: 2px solid ${gradeColors[grade]};
+                    ">${grade}</div>
+                `;
+
+                // Add hover effect
+                const barElement = bar.querySelector('div:nth-child(2)');
+                barElement.addEventListener('mouseenter', function () {
+                    this.style.transform = 'scaleY(1.05)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                });
+                barElement.addEventListener('mouseleave', function () {
+                    this.style.transform = 'scaleY(1)';
+                    this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                });
+
+                container.appendChild(bar);
+            });
         }
 
         function exportToCSV() {

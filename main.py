@@ -1021,10 +1021,28 @@ async def get_sheet_statistics(sheet_id: str):
         # Second pass: assign relative grades
         for student in students:
             student['grade'] = calculate_relative_grade(student['total'], all_totals)
-            student['percentage'] = round((student['total'] / sum(subject_averages.values())) * 100, 2) if subject_averages else 0
+            # Calculate percentage based on 100 total marks (current 55 + future 45)
+            # Current marks are out of 55, so percentage = (current_marks / 55) * 100
+            total_possible_marks = 100  # Total marks for the course
+            current_marks_total = sum(subject_averages.values())  # Sum of all current assessment max marks
+            
+            # Calculate percentage: (student's marks / current possible marks) * 100
+            student['percentage'] = round((student['total'] / current_marks_total) * 100, 2) if current_marks_total > 0 else 0
         
         # Sort students by total (highest first)
         students.sort(key=lambda x: x['total'], reverse=True)
+        
+        # Calculate grade distribution for bell curve
+        grade_distribution = {}
+        for student in students:
+            grade = student['grade']
+            grade_distribution[grade] = grade_distribution.get(grade, 0) + 1
+        
+        # Ensure all grades are in distribution (even if count is 0)
+        all_grades = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F']
+        for grade in all_grades:
+            if grade not in grade_distribution:
+                grade_distribution[grade] = 0
         
         return {
             "success": True,
@@ -1036,7 +1054,10 @@ async def get_sheet_statistics(sheet_id: str):
                 "subjectAverages": {k: round(v, 2) for k, v in subject_averages.items()},
                 "highestScore": max(all_totals) if all_totals else 0,
                 "lowestScore": min(all_totals) if all_totals else 0,
-                "headers": headers
+                "headers": headers,
+                "gradeDistribution": grade_distribution,
+                "totalPossibleMarks": 100,
+                "currentMarksTotal": round(sum(subject_averages.values()), 2) if subject_averages else 55
             }
         }
         

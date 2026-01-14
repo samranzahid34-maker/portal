@@ -848,6 +848,13 @@ def calculate_relative_grade(score, all_scores, student_index=None):
     - Maximum 2 students can get A+
     - Only if top 2 students' marks are within 1-3 marks difference
     - Otherwise, only rank 1 gets A+
+    
+    University Standard Grading (More Realistic Distribution):
+    - Top performers get A grades
+    - Good performers get B grades  
+    - Average performers get C grades
+    - Below average get D grades
+    - Failing students get F
     """
     if not all_scores or score is None:
         return "N/A"
@@ -886,30 +893,32 @@ def calculate_relative_grade(score, all_scores, student_index=None):
             return "A"  # If difference > 3, rank 2 gets A instead
     
     # For all other students, use percentile-based grading
-    # Refined 13-level grading scale
-    if percentile >= 92:  # Top ~8%
+    # UPDATED: More realistic university-standard distribution
+    # Allows more students to get good grades based on performance
+    
+    if percentile >= 85:  # Top 15% (after A+)
         return "A"
-    elif percentile >= 84:  # Next ~8%
+    elif percentile >= 75:  # Next 10%
         return "A-"
-    elif percentile >= 76:  # Next ~8%
+    elif percentile >= 65:  # Next 10%
         return "B+"
-    elif percentile >= 68:  # Next ~8%
+    elif percentile >= 55:  # Next 10%
         return "B"
-    elif percentile >= 60:  # Next ~8%
+    elif percentile >= 45:  # Next 10%
         return "B-"
-    elif percentile >= 52:  # Next ~8%
+    elif percentile >= 35:  # Next 10%
         return "C+"
-    elif percentile >= 44:  # Next ~8%
+    elif percentile >= 28:  # Next 7%
         return "C"
-    elif percentile >= 36:  # Next ~8%
+    elif percentile >= 21:  # Next 7%
         return "C-"
-    elif percentile >= 28:  # Next ~8%
+    elif percentile >= 14:  # Next 7%
         return "D+"
-    elif percentile >= 20:  # Next ~8%
+    elif percentile >= 9:   # Next 5%
         return "D"
-    elif percentile >= 12:  # Next ~8%
+    elif percentile >= 5:   # Next 4%
         return "D-"
-    else:  # Bottom ~12%
+    else:  # Bottom 5%
         return "F"
 
 @app.get("/api/admin/sheet-statistics/{sheet_id}")
@@ -1021,13 +1030,11 @@ async def get_sheet_statistics(sheet_id: str):
         # Second pass: assign relative grades
         for student in students:
             student['grade'] = calculate_relative_grade(student['total'], all_totals)
-            # Calculate percentage based on 100 total marks (current 55 + future 45)
-            # Current marks are out of 55, so percentage = (current_marks / 55) * 100
-            total_possible_marks = 100  # Total marks for the course
-            current_marks_total = sum(subject_averages.values())  # Sum of all current assessment max marks
-            
-            # Calculate percentage: (student's marks / current possible marks) * 100
-            student['percentage'] = round((student['total'] / current_marks_total) * 100, 2) if current_marks_total > 0 else 0
+            # Calculate percentage based on actual current marks (55)
+            # Total course marks = 100 (current 55 + future final 45)
+            # Percentage = (student's current marks / 55) * 100
+            current_marks_maximum = 55  # Actual maximum marks for current assessments
+            student['percentage'] = round((student['total'] / current_marks_maximum) * 100, 2) if current_marks_maximum > 0 else 0
         
         # Sort students by total (highest first)
         students.sort(key=lambda x: x['total'], reverse=True)
@@ -1057,7 +1064,7 @@ async def get_sheet_statistics(sheet_id: str):
                 "headers": headers,
                 "gradeDistribution": grade_distribution,
                 "totalPossibleMarks": 100,
-                "currentMarksTotal": round(sum(subject_averages.values()), 2) if subject_averages else 55
+                "currentMarksTotal": 55  # Fixed: actual maximum marks for current assessments
             }
         }
         

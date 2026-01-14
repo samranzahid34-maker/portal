@@ -211,45 +211,37 @@
                         </div>
                     </div>
 
-                    <!-- Subject Averages -->
-                    <div class="card" style="margin-bottom: 2rem;">
-                        <h3 style="margin-bottom: 1rem; color: var(--primary);">Subject-wise Averages</h3>
-                        <div id="subject-averages"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <!-- Student Results Table -->
+                    <div id="stats-table-container" style="display:none;">
+                        <div class="card">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3 style="color: var(--primary);">Student Results with Relative Grades</h3>
+                                <button onclick="exportToCSV()" class="btn-secondary"
+                                    style="padding: 0.5rem 1rem; font-size: 0.9rem;">📥 Export CSV</button>
+                            </div>
+                            <div style="overflow-x: auto;">
+                                <table id="stats-table"
+                                    style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                                    <thead style="background: #f8fafc; position: sticky; top: 0;">
+                                        <tr id="stats-table-header">
+                                            <th
+                                                style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">
+                                                Rank</th>
+                                            <th
+                                                style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 80px;">
+                                                Roll No</th>
+                                            <th
+                                                style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 100px;">
+                                                Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stats-table-body"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Student Results Table -->
-                <div id="stats-table-container" style="display:none;">
-                    <div class="card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3 style="color: var(--primary);">Student Results with Relative Grades</h3>
-                            <button onclick="exportToCSV()" class="btn-secondary"
-                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">📥 Export CSV</button>
-                        </div>
-                        <div style="overflow-x: auto;">
-                            <table id="stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
-                                <thead style="background: #f8fafc; position: sticky; top: 0;">
-                                    <tr id="stats-table-header">
-                                        <th
-                                            style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem;">
-                                            Rank</th>
-                                        <th
-                                            style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 80px;">
-                                            Roll No</th>
-                                        <th
-                                            style="padding: 0.5rem 0.3rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.7rem; min-width: 100px;">
-                                            Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="stats-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -697,20 +689,6 @@
 
             // Display grade distribution bell curve
             displayGradeDistribution(statistics.gradeDistribution, statistics.totalStudents);
-
-            // Display subject averages
-            const subjectAvgContainer = document.getElementById('subject-averages');
-            subjectAvgContainer.innerHTML = '';
-
-            for (const [subject, avg] of Object.entries(statistics.subjectAverages)) {
-                const subjectCard = document.createElement('div');
-                subjectCard.style.cssText = 'padding: 1rem; background: #f8fafc; border-radius: 0.5rem; text-align: center;';
-                subjectCard.innerHTML = `
-                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">${subject}</div>
-                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary);">${avg.toFixed(2)}</div>
-                `;
-                subjectAvgContainer.appendChild(subjectCard);
-            }
 
             // Build table header dynamically - COMPACT VERSION
             const tableHeader = document.getElementById('stats-table-header');

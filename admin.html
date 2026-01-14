@@ -696,7 +696,8 @@
 
             // Update current marks total in note
             if (statistics.currentMarksTotal) {
-                document.getElementById('current-total-marks').textContent = statistics.currentMarksTotal;
+                const totalEl = document.getElementById('current-total-marks');
+                if (totalEl) totalEl.textContent = statistics.currentMarksTotal;
             }
 
             // Display grade distribution bell curve

@@ -741,12 +741,30 @@
                     }
                 });
 
-                // Grade color coding
+                // Grade color coding - 13 levels
                 const gradeColors = {
-                    'A+': '#10b981', 'A': '#22c55e',
-                    'B+': '#3b82f6', 'B': '#60a5fa',
-                    'C+': '#f59e0b', 'C': '#fbbf24',
-                    'D': '#ef4444', 'F': '#dc2626'
+                    // A grades - Green shades (Excellent)
+                    'A+': '#059669',  // Emerald 600 - Darkest green for top grade
+                    'A': '#10b981',   // Emerald 500 - Bright green
+                    'A-': '#34d399',  // Emerald 400 - Light green
+
+                    // B grades - Blue shades (Good)
+                    'B+': '#2563eb',  // Blue 600 - Dark blue
+                    'B': '#3b82f6',   // Blue 500 - Bright blue
+                    'B-': '#60a5fa',  // Blue 400 - Light blue
+
+                    // C grades - Orange/Yellow shades (Average)
+                    'C+': '#d97706',  // Amber 600 - Dark orange
+                    'C': '#f59e0b',   // Amber 500 - Orange
+                    'C-': '#fbbf24',  // Amber 400 - Light orange/yellow
+
+                    // D grades - Red/Pink shades (Below Average)
+                    'D+': '#dc2626',  // Red 600 - Dark red
+                    'D': '#ef4444',   // Red 500 - Red
+                    'D-': '#f87171',  // Red 400 - Light red
+
+                    // F grade - Deep red (Fail)
+                    'F': '#991b1b'    // Red 800 - Very dark red
                 };
                 const gradeColor = gradeColors[student.grade] || '#64748b';
 

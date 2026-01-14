@@ -839,40 +839,77 @@ async def get_sources():
     data = [{"sheetId": s[0], "range": s[1], "name": s[2] if len(s) > 2 else s[0][:15] + "..."} for s in sources]
     return {"success": True, "sources": data}
 
-def calculate_relative_grade(percentage, all_percentages):
+def calculate_relative_grade(score, all_scores, student_index=None):
     """
     Calculate relative grade based on university marking system
-    Uses percentile-based grading (relative to class performance)
+    Uses refined grading scale: A+, A, A-, B+, B, B-, C+, C, C-, D+, D, D-, F
+    
+    Special Rule for A+:
+    - Maximum 2 students can get A+
+    - Only if top 2 students' marks are within 1-3 marks difference
+    - Otherwise, only rank 1 gets A+
     """
-    if not all_percentages or percentage is None:
+    if not all_scores or score is None:
         return "N/A"
     
-    # Sort all percentages to find percentile
-    sorted_scores = sorted([p for p in all_percentages if p is not None], reverse=True)
+    # Sort all scores to find rank (highest first)
+    sorted_scores = sorted([s for s in all_scores if s is not None], reverse=True)
     
     if not sorted_scores:
         return "N/A"
     
-    # Find percentile rank
-    rank = sorted_scores.index(percentage) if percentage in sorted_scores else len(sorted_scores)
-    percentile = (1 - (rank / len(sorted_scores))) * 100
+    # Find rank (1-based)
+    try:
+        rank = sorted_scores.index(score) + 1
+    except ValueError:
+        rank = len(sorted_scores)
     
-    # Relative grading based on percentile
-    if percentile >= 90:
+    total_students = len(sorted_scores)
+    
+    # Calculate percentile (what percentage of students this student beat)
+    percentile = ((total_students - rank) / total_students) * 100
+    
+    # Special handling for A+ grade
+    # Maximum 2 students, only if top 2 are within 1-3 marks
+    if rank == 1:
+        # Rank 1 always gets A+ (if they're the top)
         return "A+"
-    elif percentile >= 80:
+    elif rank == 2:
+        # Rank 2 gets A+ only if within 1-3 marks of rank 1
+        top_score = sorted_scores[0]
+        second_score = sorted_scores[1]
+        difference = top_score - second_score
+        
+        if 1 <= difference <= 3:
+            return "A+"
+        else:
+            return "A"  # If difference > 3, rank 2 gets A instead
+    
+    # For all other students, use percentile-based grading
+    # Refined 13-level grading scale
+    if percentile >= 92:  # Top ~8%
         return "A"
-    elif percentile >= 70:
+    elif percentile >= 84:  # Next ~8%
+        return "A-"
+    elif percentile >= 76:  # Next ~8%
         return "B+"
-    elif percentile >= 60:
+    elif percentile >= 68:  # Next ~8%
         return "B"
-    elif percentile >= 50:
+    elif percentile >= 60:  # Next ~8%
+        return "B-"
+    elif percentile >= 52:  # Next ~8%
         return "C+"
-    elif percentile >= 40:
+    elif percentile >= 44:  # Next ~8%
         return "C"
-    elif percentile >= 30:
+    elif percentile >= 36:  # Next ~8%
+        return "C-"
+    elif percentile >= 28:  # Next ~8%
+        return "D+"
+    elif percentile >= 20:  # Next ~8%
         return "D"
-    else:
+    elif percentile >= 12:  # Next ~8%
+        return "D-"
+    else:  # Bottom ~12%
         return "F"
 
 @app.get("/api/admin/sheet-statistics/{sheet_id}")

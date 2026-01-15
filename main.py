@@ -993,29 +993,14 @@ def calculate_custom_grade(score, all_scores, config: GradingConfig):
         return calculate_relative_grade(score, all_scores)
 
 
-@app.get("/api/admin/sheet-statistics/{sheet_id}")
-def get_sheet_statistics(sheet_id: str):
+def _fetch_sheet_statistics_internal(sheet_id: str, range_val: str, sheet_name: str):
     """
-    Get all students from a specific sheet with class statistics and relative grades
+    Internal helper to fetch sheet stats without re-fetching source config.
     """
     try:
         if not sheets_service:
-            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
-        
-        # Find the source configuration
-        sources = get_sheet_sources()
-        source_config = None
-        
-        for source in sources:
-            if source[0] == sheet_id:
-                source_config = source
-                break
-        
-        if not source_config:
-            raise HTTPException(status_code=404, detail="Sheet not found in configured sources")
-        
-        sheet_id, range_val, sheet_name = source_config if len(source_config) == 3 else (*source_config, "Unknown")
-        
+            raise Exception("Google Sheets service not initialized")
+            
         # Get header row
         header_row = 1
         sheet_part = "Sheet1"
@@ -1143,6 +1128,34 @@ def get_sheet_statistics(sheet_id: str):
                 "sequentialTotals": sequential_totals
             }
         }
+    except Exception as e:
+        # Propagate exception
+        raise e
+
+@app.get("/api/admin/sheet-statistics/{sheet_id}")
+def get_sheet_statistics(sheet_id: str):
+    """
+    Get all students from a specific sheet with class statistics and relative grades
+    """
+    try:
+        if not sheets_service:
+            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
+        
+        # Find the source configuration
+        sources = get_sheet_sources()
+        source_config = None
+        
+        for source in sources:
+            if source[0] == sheet_id:
+                source_config = source
+                break
+        
+        if not source_config:
+            raise HTTPException(status_code=404, detail="Sheet not found in configured sources")
+        
+        sheet_id, range_val, sheet_name = source_config if len(source_config) == 3 else (*source_config, "Unknown")
+        
+        return _fetch_sheet_statistics_internal(sheet_id, range_val, sheet_name)
         
     except HTTPException:
         raise
@@ -1323,8 +1336,15 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     
     # Prepare concurrent fetch tasks
     for source in sources:
-        sh_id = source[0]
-        tasks.append(loop.run_in_executor(None, get_sheet_statistics, sh_id))
+        # source format: (id, range, name)
+        # Safely unpack
+        if len(source) == 3:
+            sh_id, sh_range, sh_name = source
+        else:
+            sh_id, sh_range = source
+            sh_name = "Unknown"
+            
+        tasks.append(loop.run_in_executor(None, _fetch_sheet_statistics_internal, sh_id, sh_range, sh_name))
             
     # Execute all fetches in parallel
     results = await asyncio.gather(*tasks, return_exceptions=True)

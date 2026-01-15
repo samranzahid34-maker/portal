@@ -161,7 +161,7 @@
     <div id="marks-section" class="hidden" style="display: flex; min-height: 100vh; background: #f8fafc;">
         <!-- Left Sidebar -->
         <aside id="subjects-sidebar"
-            style="width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 4px 0 12px rgba(0,0,0,0.1);">
+            style="width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 4px 0 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; left: 0; z-index: 50;">
             <!-- Student Info in Sidebar -->
             <div
                 style="padding: 0 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem;">
@@ -184,25 +184,43 @@
         </aside>
 
         <!-- Main Content Area -->
-        <main style="margin-left: 280px; flex: 1; padding: 2rem 3rem;">
+        <main id="main-content" style="margin-left: 280px; flex: 1; padding: 0; transition: margin-left 0.3s ease;">
             <!-- Header -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <div>
-                    <h1 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">My Dashboard</h1>
-                    <p style="color: #64748b; margin-top: 0.5rem;">View your academic performance</p>
-                </div>
+            <div
+                style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: white; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <!-- Left: Hamburger -->
+                <button onclick="toggleSidebar()"
+                    style="background: none; border: none; cursor: pointer; font-size: 1.5rem; color: #1e293b; padding: 0.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
+                <!-- Center: Title -->
+                <h1
+                    style="font-size: 1.5rem; font-weight: 700; color: #6366f1; margin: 0; position: absolute; left: 50%; transform: translateX(-50%);">
+                    Subject Marks Portal</h1>
+
+                <!-- Right: Logout -->
                 <button class="btn-logout" onclick="logout()"
-                    style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">Logout</button>
+                    style="padding: 0.6rem 1.2rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;">Logout</button>
             </div>
 
-            <!-- Content Container -->
-            <div id="marks-container">
-                <!-- Default welcome message -->
-                <div id="welcome-message"
-                    style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
-                    <h2 style="color: #1e293b; margin-bottom: 0.5rem;">Welcome to Your Dashboard</h2>
-                    <p style="color: #64748b;">Select a subject from the sidebar to view your marks</p>
+            <div style="padding: 0 3rem;">
+
+
+                <!-- Content Container -->
+                <div id="marks-container">
+                    <!-- Default welcome message -->
+                    <div id="welcome-message"
+                        style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+                        <h2 style="color: #1e293b; margin-bottom: 0.5rem;">Welcome to Your Dashboard</h2>
+                        <p style="color: #64748b;">Select a subject from the sidebar to view your marks</p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -219,6 +237,22 @@
 
     <script>
         const API_URL = '/api';
+        let isSidebarOpen = true;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('subjects-sidebar');
+            const mainContent = document.getElementById('main-content');
+
+            isSidebarOpen = !isSidebarOpen;
+
+            if (isSidebarOpen) {
+                sidebar.style.transform = 'translateX(0)';
+                mainContent.style.marginLeft = '280px';
+            } else {
+                sidebar.style.transform = 'translateX(-100%)';
+                mainContent.style.marginLeft = '0';
+            }
+        }
 
         function toggleForms(type) {
             const loginWrap = document.getElementById('login-form-wrapper');

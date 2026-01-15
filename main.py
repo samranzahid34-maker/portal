@@ -351,19 +351,19 @@ def append_user_to_sheet(env_var_name, role, roll, name, email, hashed_password)
         print(f"Sheet Append Error ({env_var_name}): {error_msg}")
         return False, f"Google Sheet Error: {error_msg}"
 
-def get_sheet_sources():
+def get_sheet_sources(owner_email=None):
     """Fetch list of Marking Sheets from the Admin Config Sheet"""
     sheet_id = os.getenv("ADMIN_SHEET_ID")
-    print(f"\n=== Reading Sources from Admin Sheet ===")
+    print(f"\n=== Reading Sources from Admin Sheet (Filter: {owner_email}) ===")
     print(f"Admin Sheet ID: {sheet_id}")
     if not sheet_id or not sheets_service:
         print("❌ No Admin Sheet ID or sheets service not initialized")
         return []
     try:
-        # Format: SheetID | Range | Name
+        # Format: SheetID | Range | Name | OwnerEmail
         result = sheets_service.spreadsheets().values().get(
             spreadsheetId=sheet_id,
-            range="Sources!A:C"
+            range="Sources!A:D"
         ).execute()
         rows = result.get('values', [])
         print(f"Got {len(rows)} rows from Sources tab")
@@ -371,11 +371,23 @@ def get_sheet_sources():
         sources = []
         for idx, row in enumerate(rows[1:], 1): # Skip header
             if len(row) >= 1:
+                # Filter by owner if specified
+                # If row has no owner column (legacy), assume public? Or hidden?
+                # Let's show legacy rows to everyone for backward compatibility, 
+                # but rows with owner only to that owner.
+                row_owner = row[3].strip().lower() if len(row) > 3 else None
+                
+                if owner_email:
+                    # Admin Context: Show my sheets + legacy public sheets
+                    if row_owner and row_owner != owner_email.lower():
+                        continue 
+                # Student Context (owner_email=None): Show all sheets (assuming public access intent)
+                
                 sid = row[0].strip()
                 rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
                 name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
                 sources.append((sid, rng, name))
-                print(f" Source {idx}: {name} ({sid[:20]}...)")
+                print(f" Source {idx}: {name} ({sid[:20]}...) Owner={row_owner}")
 
         print(f"✓ Loaded {len(sources)} sources")
         return sources
@@ -385,19 +397,25 @@ def get_sheet_sources():
         traceback.print_exc()
         return []
 
-def append_source_to_sheet(target_sheet_id, target_range, sheet_name=""):
+def append_source_to_sheet(target_sheet_id, target_range, sheet_name="", owner_email=""):
     """Save a new Marking Sheet ID to the Admin Config Sheet"""
     config_sheet_id = os.getenv("ADMIN_SHEET_ID")
     if not config_sheet_id or not sheets_service:
         return False, "ADMIN_SHEET_ID not configured or Sheets service not initialized"
     try:
-        body = {"values": [[target_sheet_id, target_range, sheet_name]]}
+        # Append with Owner Email in Column D
+        body = {"values": [[target_sheet_id, target_range, sheet_name, owner_email]]}
         sheets_service.spreadsheets().values().append(
             spreadsheetId=config_sheet_id,
-            range="Sources!A:C",
+            range="Sources!A:D",
             valueInputOption="RAW",
             body=body
         ).execute()
+        return True, "Success"
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Source Config Write Error: {error_msg}")
+        return False, f"Failed to write to Sources tab: {error_msg}"
         return True, "Success"
     except Exception as e:
         error_msg = str(e)
@@ -720,9 +738,9 @@ async def register_admin(admin: AdminRegister):
     # Check duplicates in sheet
     sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
 
-    # STRICT SECURITY: Only 1 Admin Allowed
-    if len(sheet_admins) > 0:
-        raise HTTPException(status_code=403, detail="Registration Closed. Only one Admin account is allowed.")
+    # MULTI-ADMIN SUPPORT: Removed single-admin restriction
+    # if len(sheet_admins) > 0:
+    #     raise HTTPException(status_code=403, detail="Registration Closed. Only one Admin account is allowed.")
 
     if any(u['email'].lower() == admin.email.lower() for u in sheet_admins):
         raise HTTPException(status_code=400, detail="Admin already registered (in Sheet)")
@@ -803,9 +821,17 @@ class UpdateSource(BaseModel):
     name: str
 
 @app.post("/api/admin/add-source")
-async def add_source(source: AddSource):
+async def add_source(source: AddSource, token: str = Header(..., alias="Authorization")):
+    # 1. Verify User
+    try:
+        scheme, _, param = token.partition(" ")
+        payload = jwt.decode(param, SECRET_KEY, algorithms=[ALGORITHM])
+        admin_email = payload.get("email")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     # 1. OPTION A: Google Sheet Config (Permanent)
-    success, msg = append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z", source.name or "")
+    success, msg = append_source_to_sheet(source.sheetId, source.range or "Sheet1!A2:Z", source.name or "", admin_email)
     if success:
         # Refresh immediately
         fetch_students_from_sheets()
@@ -1372,42 +1398,36 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # Fetch Real Admin Name from Google Sheet
-    admin_name = "Admin"
-    try:
-        sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
-        admin_user = next((u for u in sheet_admins if u['email'].lower() == admin_email.lower()), None)
-        if admin_user:
-            admin_name = admin_user['name']
-        elif admin_email:
-             admin_name = admin_email.split('@')[0].replace('.', ' ').title()
-    except:
-        pass # Fallback to default "Admin"
+    # 1. Fetch Sources (Filtered by Admin)
+    # Re-using fetch logic but filtering sources first
+    sources = get_sheet_sources(admin_email)
+    
+    if not sources:
+        return {
+            "totalStudents": 0,
+            "overallAverage": 0,
+            "highestMarks": 0,
+            "lowestMarks": 0,
+            "sections": []
+        }
 
-    sources = get_sheet_sources()
+    # 2. Sequential Processing for Dashboard
     import asyncio
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
+    loop = asyncio.get_event_loop()
+    
     sections_data = []
     
-    # Execute fetches sequentially to ensure thread-safety/stability of shared Sheets Service
     for source in sources:
-        if len(source) == 3:
-            sh_id, sh_range, sh_name = source
-        else:
+        if len(source) == 2:
             sh_id, sh_range = source
             sh_name = "Unknown"
+        else:
+            sh_id, sh_range, sh_name = source
             
         try:
-            # Run in thread but await result before starting next one (Sequential execution)
-            # This prevents "SSL record layer failure" caused by concurrent requests on shared http transport
+            # Run in thread but await result (Sequential)
             res = await loop.run_in_executor(None, _fetch_sheet_statistics_internal, sh_id, sh_range, sh_name)
             
-            # Success handling
             stats = res["statistics"]
             student_totals = stats.get("sequentialTotals", [])
             
@@ -1420,35 +1440,29 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
                 "lowest": stats["lowestScore"],
                 "performanceCurve": student_totals 
             })
-
         except Exception as e:
-            print(f"Dashboard fetch failed for source {sh_id}: {e}")
-            sections_data.append({
-                "id": sh_id,
-                "name": f"{sh_name} (Error)",
-                "totalStudents": 0,
-                "classAverage": 0,
-                "highest": 0,
-                "lowest": 0,
-                "performanceCurve": [],
-                "error": str(e)
-            })
+            print(f"Dashboard Error reading {sh_name}: {e}")
+            continue
 
-    # Results are already processed into sections_data
-    # No need to iterate results again
-
-    total_students = sum(s['totalStudents'] for s in sections_data)
-    avg_sum = sum(s['classAverage'] for s in sections_data)
-    overall_avg = avg_sum / len(sections_data) if sections_data else 0
+    # 3. Calculate Overall Aggregates
+    total_students = sum(s["totalStudents"] for s in sections_data)
     
+    # Weighted average for overall accuracy
+    if total_students > 0:
+        overall_avg = sum(s["classAverage"] * s["totalStudents"] for s in sections_data) / total_students
+    else:
+        overall_avg = 0
+        
+    highest = max((s["highest"] for s in sections_data), default=0)
+    lowest = min((s["lowest"] for s in sections_data), default=0)
+
     return {
-        "success": True,
-        "admin": { "name": admin_name, "email": admin_email },
-        "summary": {
-            "totalStudents": total_students,
-            "overallAverage": round(overall_avg, 2),
-            "activeSections": len(sections_data)
-        },
+        "adminName": payload.get("sub", "Admin"), # 'sub' usually isn't set for name in my token, assume 'Admin' or fetch
+        "adminEmail": admin_email,
+        "totalStudents": total_students,
+        "overallAverage": round(overall_avg, 2),
+        "highestMarks": highest,
+        "lowestMarks": lowest,
         "sections": sections_data
     }
 

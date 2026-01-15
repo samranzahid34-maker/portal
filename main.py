@@ -1412,12 +1412,24 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    # Fetch admin name from Google Sheet
+    admin_name = "Admin"
+    try:
+        sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+        admin_user = next((u for u in sheet_admins if u['email'].lower() == admin_email.lower()), None)
+        if admin_user:
+            admin_name = admin_user['name']
+    except Exception as e:
+        print(f"Could not fetch admin name: {e}")
+
     # 1. Fetch Sources (Filtered by Admin)
-    # Re-using fetch logic but filtering sources first
     sources = get_sheet_sources(admin_email)
     
+    # If no sources, return empty dashboard with admin info
     if not sources:
         return {
+            "adminName": admin_name,
+            "adminEmail": admin_email,
             "totalStudents": 0,
             "overallAverage": 0,
             "highestMarks": 0,
@@ -1471,7 +1483,7 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     lowest = min((s["lowest"] for s in sections_data), default=0)
 
     return {
-        "adminName": payload.get("sub", "Admin"), # 'sub' usually isn't set for name in my token, assume 'Admin' or fetch
+        "adminName": admin_name,
         "adminEmail": admin_email,
         "totalStudents": total_students,
         "overallAverage": round(overall_avg, 2),

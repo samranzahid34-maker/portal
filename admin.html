@@ -7,6 +7,7 @@
     <title>Admin Dashboard | Subject Marks</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Base Layout */
         .admin-layout {
@@ -262,6 +263,15 @@
                             Active Sections</div>
                         <div id="dash-active-sections" style="font-size:3rem; font-weight:700;">-</div>
                         <div style="font-size:0.9rem; opacity:0.8; margin-top:0.5rem;">Configured Sheets</div>
+                    </div>
+                </div>
+
+                <!-- Performance Graph -->
+                <div class="card" style="margin-bottom: 2rem; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--text); font-weight: 600;">Overall Section Performance
+                    </h3>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="performance-chart"></canvas>
                     </div>
                 </div>
 
@@ -948,6 +958,9 @@
 
                     document.getElementById('dash-active-sections').textContent = data.summary.activeSections;
 
+                    // Render Performance Chart
+                    renderPerformanceChart(data.sections);
+
                     // Update Sections Table
                     const tbody = document.getElementById('dash-sections-body');
                     if (data.sections.length > 0) {
@@ -970,6 +983,91 @@
                 document.getElementById('dash-total-students').innerHTML = '<span style="color:#f87171; font-size:1.5rem">Error</span>';
                 document.getElementById('dash-sections-body').innerHTML = `<tr><td colspan="5" style="padding:2rem; text-align:center; color:#ef4444;">Failed to load data. Please refresh or check logs.</td></tr>`;
             }
+        }
+
+        let performanceChartInstance = null;
+
+        function renderPerformanceChart(sections) {
+            const ctx = document.getElementById('performance-chart').getContext('2d');
+
+            // Destroy previous chart if exists
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+
+            // Prepare datasets
+            // X-axis: 1 to 60
+            const labels = Array.from({ length: 60 }, (_, i) => i + 1);
+
+            // Vibrant colors matching the theme
+            const colors = [
+                { border: '#6366f1', bg: 'rgba(99, 102, 241, 0.1)' }, // Indigo
+                { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' }, // Emerald
+                { border: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },  // Rose
+                { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' }, // Amber
+                { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' }, // Violet
+            ];
+
+            const datasets = sections.map((sec, index) => {
+                // Get top 60 marks, pad with null if fewer
+                let dataPoints = sec.performanceCurve.slice(0, 60);
+                // Ensure we handle less than 60 students gracefully (graph stops)
+
+                const color = colors[index % colors.length];
+
+                return {
+                    label: sec.name,
+                    data: dataPoints,
+                    borderColor: color.border,
+                    backgroundColor: color.bg,
+                    borderWidth: 2,
+                    tension: 0.4, // Smooth curves
+                    pointRadius: 0, // Clean lines
+                    pointHoverRadius: 4,
+                    fill: false
+                };
+            });
+
+            performanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { usePointStyle: true, boxWidth: 8 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `Rank ${context[0].label}`,
+                                label: (context) => `${context.dataset.label}: ${context.raw} Marks`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'Marks (0-100)' },
+                            grid: { color: '#f1f5f9' },
+                            ticks: { stepSize: 10 }
+                        },
+                        x: {
+                            title: { display: true, text: 'Student Rank (1-60)' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
         }
 
         let currentStatsData = null; // Store current statistics data for export

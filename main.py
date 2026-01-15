@@ -1322,15 +1322,19 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
             print(f"Dashboard fetch failed for source {sources[i][0]}: {res}")
             continue
             
-        if res.get("success"):
+            if res.get("success"):
             stats = res["statistics"]
+            # Extract and sort student totals for the graph
+            student_totals = sorted([s['total'] for s in res['students']], reverse=True)
+            
             sections_data.append({
                 "id": sources[i][0],
                 "name": res["sheetName"],
                 "totalStudents": stats["totalStudents"],
                 "classAverage": stats["classAverage"],
                 "highest": stats["highestScore"],
-                "lowest": stats["lowestScore"]
+                "lowest": stats["lowestScore"],
+                "performanceCurve": student_totals # Send all totals, let frontend limit to 60
             })
 
     total_students = sum(s['totalStudents'] for s in sections_data)

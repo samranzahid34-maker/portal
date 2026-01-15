@@ -1287,7 +1287,7 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     try:
         token = authorization.split(" ")[1] if " " in authorization else authorization
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        admin_email = payload.get("sub")
+        admin_email = payload.get("sub") or payload.get("email")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 

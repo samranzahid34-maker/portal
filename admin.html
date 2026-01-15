@@ -133,14 +133,6 @@
                         <div style="font-size:0.9rem; opacity:0.8; margin-top:0.5rem;">Across all active sections</div>
                     </div>
                     <div class="card"
-                        style="background:#3b82f6; color:white; padding:2rem; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(59, 130, 246, 0.3);">
-                        <div
-                            style="font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; opacity:0.9; margin-bottom:0.5rem;">
-                            Overall Average Marks</div>
-                        <div id="dash-overall-avg" style="font-size:3rem; font-weight:700;">-</div>
-                        <div style="font-size:0.9rem; opacity:0.8; margin-top:0.5rem;">Aggregated Performance</div>
-                    </div>
-                    <div class="card"
                         style="background:#10b981; color:white; padding:2rem; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(16, 185, 129, 0.3);">
                         <div
                             style="font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; opacity:0.9; margin-bottom:0.5rem;">
@@ -823,7 +815,7 @@
 
                     // Update Summary Cards
                     document.getElementById('dash-total-students').textContent = data.summary.totalStudents;
-                    document.getElementById('dash-overall-avg').textContent = data.summary.overallAverage;
+
                     document.getElementById('dash-active-sections').textContent = data.summary.activeSections;
 
                     // Update Sections Table

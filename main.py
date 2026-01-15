@@ -368,6 +368,18 @@ def get_sheet_sources(owner_email=None):
         rows = result.get('values', [])
         print(f"Got {len(rows)} rows from Sources tab")
 
+        # Get first admin email for legacy sources (backward compatibility)
+        first_admin_email = None
+        if owner_email:
+            try:
+                sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+                if sheet_admins:
+                    # First admin is the one who registered first (first row in sheet)
+                    first_admin_email = sheet_admins[0]['email'].lower()
+                    print(f"First admin (for legacy sources): {first_admin_email}")
+            except Exception as e:
+                print(f"Could not determine first admin: {e}")
+
         sources = []
         for idx, row in enumerate(rows[1:], 1): # Skip header
             if len(row) >= 1:
@@ -375,11 +387,21 @@ def get_sheet_sources(owner_email=None):
                 row_owner = row[3].strip().lower() if len(row) > 3 and row[3].strip() else None
                 
                 if owner_email:
-                    # STRICT ADMIN FILTERING: Only show sources that explicitly belong to this admin
-                    # Legacy sources (no owner) are NOT shown to admins
-                    if not row_owner or row_owner != owner_email.lower():
-                        print(f" Skipping {row[2] if len(row) > 2 else 'Unknown'}: Owner={row_owner}, Looking for={owner_email.lower()}")
-                        continue
+                    # BACKWARD COMPATIBLE ADMIN FILTERING:
+                    # 1. If source has owner email → show only to that admin
+                    # 2. If source has NO owner (legacy) → show to first admin only
+                    if row_owner:
+                        # Source has explicit owner
+                        if row_owner != owner_email.lower():
+                            print(f" Skipping {row[2] if len(row) > 2 else 'Unknown'}: Owner={row_owner}, Current={owner_email.lower()}")
+                            continue
+                    else:
+                        # Legacy source (no owner) - show only to first admin
+                        if owner_email.lower() != first_admin_email:
+                            print(f" Skipping legacy source {row[2] if len(row) > 2 else 'Unknown'}: No owner, Current={owner_email.lower()}, First={first_admin_email}")
+                            continue
+                        else:
+                            print(f" Including legacy source {row[2] if len(row) > 2 else 'Unknown'}: No owner, showing to first admin")
                 else:
                     # Student Context (owner_email=None): Show all sheets for public search
                     pass
@@ -388,12 +410,10 @@ def get_sheet_sources(owner_email=None):
                 rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
                 name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
                 sources.append((sid, rng, name))
-                print(f" ✓ Source {idx}: {name} ({sid[:20]}...) Owner={row_owner}")
+                print(f" ✓ Source {idx}: {name} ({sid[:20]}...) Owner={row_owner or 'LEGACY'}")
 
         print(f"✓ Loaded {len(sources)} sources for {owner_email or 'public'}")
         return sources
-    except Exception as e:
-        print(f"❌ Error reading Sources tab: {e}")
     except Exception as e:
         print(f"❌ Error reading Sources tab: {e}")
         import traceback

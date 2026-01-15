@@ -995,9 +995,9 @@
                 performanceChartInstance.destroy();
             }
 
-            // Prepare datasets
-            // X-axis: 1 to 60
-            const labels = Array.from({ length: 60 }, (_, i) => i + 1);
+            // Find max number of students to set X-axis
+            const maxStudents = Math.max(...sections.map(s => s.performanceCurve.length), 60); // Min 60 for scale
+            const labels = Array.from({ length: maxStudents }, (_, i) => i + 1);
 
             // Vibrant colors matching the theme
             const colors = [
@@ -1009,9 +1009,8 @@
             ];
 
             const datasets = sections.map((sec, index) => {
-                // Get top 60 marks, pad with null if fewer
-                let dataPoints = sec.performanceCurve.slice(0, 60);
-                // Ensure we handle less than 60 students gracefully (graph stops)
+                // Plot ALL students in sequence (no slice)
+                const dataPoints = sec.performanceCurve;
 
                 const color = colors[index % colors.length];
 
@@ -1021,9 +1020,9 @@
                     borderColor: color.border,
                     backgroundColor: color.bg,
                     borderWidth: 2,
-                    tension: 0.4, // Smooth curves
-                    pointRadius: 0, // Clean lines
-                    pointHoverRadius: 4,
+                    tension: 0.3, // Slightly less curve for raw data
+                    pointRadius: 2, // Show points for individual students
+                    pointHoverRadius: 5,
                     fill: false
                 };
             });
@@ -1048,7 +1047,7 @@
                         },
                         tooltip: {
                             callbacks: {
-                                title: (context) => `Rank ${context[0].label}`,
+                                title: (context) => `Student #${context[0].label}`,
                                 label: (context) => `${context.dataset.label}: ${context.raw} Marks`
                             }
                         }
@@ -1062,7 +1061,7 @@
                             ticks: { stepSize: 10 }
                         },
                         x: {
-                            title: { display: true, text: 'Student Rank (1-60)' },
+                            title: { display: true, text: 'Student Sequence (Sheet Order)' },
                             grid: { display: false }
                         }
                     }

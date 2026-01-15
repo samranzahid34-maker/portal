@@ -1108,6 +1108,9 @@ async def get_sheet_statistics(sheet_id: str):
             current_marks_maximum = 55  # Actual maximum marks for current assessments
             student['percentage'] = round((student['total'] / current_marks_maximum) * 100, 2) if current_marks_maximum > 0 else 0
         
+        # Capture sequential totals (Sheet Order) before sorting for Graph
+        sequential_totals = [s['total'] for s in students]
+
         # Sort students by total (highest first)
         students.sort(key=lambda x: x['total'], reverse=True)
         
@@ -1136,7 +1139,8 @@ async def get_sheet_statistics(sheet_id: str):
                 "headers": headers,
                 "gradeDistribution": grade_distribution,
                 "totalPossibleMarks": 100,
-                "currentMarksTotal": 55  # Fixed: actual maximum marks for current assessments
+                "currentMarksTotal": 55,  # Fixed: actual maximum marks for current assessments
+                "sequentialTotals": sequential_totals
             }
         }
         
@@ -1227,7 +1231,10 @@ async def calculate_grades_endpoint(config: GradingConfig):
             student['grade'] = calculate_custom_grade(student['total'], all_totals, config)
             current_marks_maximum = 55
             student['percentage'] = round((student['total'] / current_marks_maximum) * 100, 2) if current_marks_maximum > 0 else 0
-            
+        
+        # Capture sequential totals before sorting
+        sequential_totals = [s['total'] for s in students]
+
         students.sort(key=lambda x: x['total'], reverse=True)
         
         grade_distribution = {}
@@ -1253,7 +1260,8 @@ async def calculate_grades_endpoint(config: GradingConfig):
                 "headers": headers,
                 "gradeDistribution": grade_distribution,
                 "totalPossibleMarks": 100,
-                "currentMarksTotal": 55
+                "currentMarksTotal": 55,
+                "sequentialTotals": sequential_totals
             }
         }
     except Exception as e:
@@ -1324,8 +1332,8 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
             
         if res.get("success"):
             stats = res["statistics"]
-            # Extract and sort student totals for the graph
-            student_totals = sorted([s['total'] for s in res['students']], reverse=True)
+            # Use preserved sequential totals (sheet order) instead of sorting
+            student_totals = stats.get("sequentialTotals", [])
             
             sections_data.append({
                 "id": sources[i][0],
@@ -1334,7 +1342,7 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
                 "classAverage": stats["classAverage"],
                 "highest": stats["highestScore"],
                 "lowest": stats["lowestScore"],
-                "performanceCurve": student_totals # Send all totals, let frontend limit to 60
+                "performanceCurve": student_totals 
             })
 
     total_students = sum(s['totalStudents'] for s in sections_data)

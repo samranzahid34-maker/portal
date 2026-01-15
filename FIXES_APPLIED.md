@@ -285,3 +285,23 @@ F:  2 students (6.7%)   ████
 ---
 
 **Next Step**: Deploy to Vercel at https://vercel.com/dashboard
+
+---
+
+### 4. ❌ **Grading Rule "Connection Error"** → ✅ **FIXED**
+
+**Problem**: Attempting to apply any grading rule (except the default auto-loaded one) resulted in a "Connection error" alert.
+- "Percentage Based" → Failed
+- "Class Limits" → Failed
+- "Automatic" (via Apply button) → Failed
+
+**Cause**:
+1. Missing `token` variable definition in `applyGradingRules` function in `admin.html`. The code tried to use `token` in the Authorization header without retrieving it from localStorage, causing a ReferenceError.
+2. Incorrect argument passed to `displayStatistics` in the success callback. It was passing `data.statistics` but the function expected the full `data` object (containing `students` list), leading to a second potential crash.
+
+**Solution**:
+- ✅ Added `const token = localStorage.getItem('adminToken');` in `applyGradingRules`.
+- ✅ Authenticated the request properly.
+- ✅ Corrected the function call to `displayStatistics(data)`.
+
+**Result**: All grading rules now work correctly without connection errors.

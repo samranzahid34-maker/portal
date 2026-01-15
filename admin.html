@@ -1475,6 +1475,9 @@
             const sheetId = document.getElementById('stats-sheet-select').value;
             if (!sheetId) return alert('Select a sheet first');
 
+            const token = localStorage.getItem('adminToken');
+            if (!token) return alert('Unauthorized. Please login again.');
+
             const method = document.getElementById('grading-method').value;
             const btn = document.querySelector('#grading-config-section button');
             const originalText = btn.textContent;
@@ -1533,7 +1536,7 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    displayStatistics(data.statistics);
+                    displayStatistics(data);
                     // Feedback handled by UI update
                 } else {
                     alert(data.detail || 'Error calculating grades');

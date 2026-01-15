@@ -293,3 +293,22 @@ Complete guides available:
 **Your refined grading system is production-ready! 🚀**
 
 Visit https://vercel.com/dashboard to complete deployment!
+
+---
+
+## 🛠️ Critical Bug Fix (Grading Rule Connection Error)
+
+### ❌ The Issue
+Users reported a "Connection error" when trying to apply grading rules:
+- **Automatic** (Default load): Works ✅
+- **Apply Rules Button** (Any rule): Fails ❌
+
+### 🔍 Root Cause
+1. **Missing Token**: `applyGradingRules` function didn't retrieve the auth token from localStorage.
+2. **Crash in Display**: `displayStatistics` was called with `data.statistics` instead of `data`, causing a crash when it tried to access the student list.
+
+### ✅ The Fix
+- Added token retrieval logic to `applyGradingRules`.
+- Corrected the data structure passed to `displayStatistics`.
+
+**Result**: All grading functionalities (Percentage, Class Limits, Manual) now work flawlessly! 🚀

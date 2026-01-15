@@ -26,8 +26,42 @@
 
                 <form onsubmit="handleLogin(event)">
                     <div class="input-group">
-                        <label>Roll Number</label>
-                        <input type="text" id="login-roll" placeholder="Fa-2022/BSCS/000" required>
+                        <label>Department</label>
+                        <select id="login-dept"
+                            style="width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; font-size: 1rem; background: #1f2937; color: white;"
+                            required>
+                            <option value="" disabled selected>Select Department</option>
+                            <option value="BSCS">BSCS</option>
+                            <option value="BS CMAI">BS CMAI</option>
+                            <option value="BS SE">BS SE</option>
+                            <option value="BS CPhyDS">BS CPhyDS</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Session</label>
+                        <select id="login-session"
+                            style="width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; font-size: 1rem; background: #1f2937; color: white;"
+                            required>
+                            <option value="" disabled selected>Select Session</option>
+                            <option value="Fa-2021">Fa-2021</option>
+                            <option value="Sp-2021">Sp-2021</option>
+                            <option value="Fa-2022">Fa-2022</option>
+                            <option value="Sp-2022">Sp-2022</option>
+                            <option value="Fa-2023">Fa-2023</option>
+                            <option value="Sp-2023">Sp-2023</option>
+                            <option value="Fa-2024">Fa-2024</option>
+                            <option value="Sp-2024">Sp-2024</option>
+                            <option value="Fa-2025">Fa-2025</option>
+                            <option value="Sp-2025">Sp-2025</option>
+                            <option value="Fa-2026">Fa-2026</option>
+                            <option value="Sp-2026">Sp-2026</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Roll Number (Digits only)</label>
+                        <input type="text" id="login-roll-num" placeholder="e.g. 001" required>
                     </div>
 
                     <div class="input-group">
@@ -56,8 +90,42 @@
 
                 <form onsubmit="handleRegister(event)">
                     <div class="input-group">
-                        <label>Roll Number</label>
-                        <input type="text" id="reg-roll" placeholder="Fa-2022/BSCS/000" required>
+                        <label>Department</label>
+                        <select id="reg-dept"
+                            style="width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; font-size: 1rem; background: #1f2937; color: white;"
+                            required>
+                            <option value="" disabled selected>Select Department</option>
+                            <option value="BSCS">BSCS</option>
+                            <option value="BS CMAI">BS CMAI</option>
+                            <option value="BS SE">BS SE</option>
+                            <option value="BS CPhyDS">BS CPhyDS</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Session</label>
+                        <select id="reg-session"
+                            style="width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 0.75rem; font-size: 1rem; background: #1f2937; color: white;"
+                            required>
+                            <option value="" disabled selected>Select Session</option>
+                            <option value="Fa-2021">Fa-2021</option>
+                            <option value="Sp-2021">Sp-2021</option>
+                            <option value="Fa-2022">Fa-2022</option>
+                            <option value="Sp-2022">Sp-2022</option>
+                            <option value="Fa-2023">Fa-2023</option>
+                            <option value="Sp-2023">Sp-2023</option>
+                            <option value="Fa-2024">Fa-2024</option>
+                            <option value="Sp-2024">Sp-2024</option>
+                            <option value="Fa-2025">Fa-2025</option>
+                            <option value="Sp-2025">Sp-2025</option>
+                            <option value="Fa-2026">Fa-2026</option>
+                            <option value="Sp-2026">Sp-2026</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Roll Number (Digits only)</label>
+                        <input type="text" id="reg-roll-num" placeholder="e.g. 001" required>
                     </div>
                     <div class="input-group">
                         <label>Full Name</label>
@@ -135,7 +203,19 @@
 
         async function handleLogin(e) {
             e.preventDefault();
-            const rollNumber = document.getElementById('login-roll').value;
+
+            // Construct Roll Number
+            const dept = document.getElementById('login-dept').value;
+            const session = document.getElementById('login-session').value;
+            const num = document.getElementById('login-roll-num').value;
+            // Construct in standard format: Session-Dept-Num (e.g., Fa-2022-BSCS-001)
+            // Using forward slash / as placeholder in original, but hyphen is safer for URL segments? 
+            // RegEx usually expects specific format. Let's stick to standard University format "Session Dept Num" often combined.
+            // Given user said "Fa-2022/BSCS/000" in original placeholder, I will use that format or hyphens. 
+            // Actually, usually it is "FA22-BSCS-001". But user dropdown has "Fa-2022".
+            // I will use HYPHENS as safest joiner: "Fa-2022-BSCS-001"
+            const rollNumber = `${session}-${dept}-${num}`;
+
             const password = document.getElementById('login-pass').value;
             const btn = e.target.querySelector('button');
             const originalText = btn.textContent;
@@ -169,7 +249,13 @@
 
         async function handleRegister(e) {
             e.preventDefault();
-            const rollNumber = document.getElementById('reg-roll').value;
+
+            // Construct Roll Number
+            const dept = document.getElementById('reg-dept').value;
+            const session = document.getElementById('reg-session').value;
+            const num = document.getElementById('reg-roll-num').value;
+            const rollNumber = `${session}-${dept}-${num}`;
+
             const name = document.getElementById('reg-name').value;
             const password = document.getElementById('reg-pass').value;
             const btn = e.target.querySelector('button');

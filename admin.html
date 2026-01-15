@@ -236,8 +236,8 @@
                 <h3 style="margin-bottom:1.5rem; color:var(--text); font-weight:600; font-size: 1.25rem;">
                     Section Performance Overview
                 </h3>
-                <div class="card" style="padding:0; overflow:hidden; max-width:100%; border-radius: 0.8rem;">
-                    <table style="width:100%; border-collapse:collapse;">
+                <div class="card" style="padding:0; overflow-x:auto; max-width:100%; border-radius: 0.8rem;">
+                    <table style="width:100%; border-collapse:collapse; min-width: 600px;">
                         <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
                             <tr>
                                 <th
@@ -444,8 +444,10 @@
                 <div id="grade-distribution-chart" style="display:none; margin: 2rem 0;">
                     <div class="card" style="max-width: 100%; padding: 1.5rem;">
                         <h3 style="margin-bottom: 1rem; color: var(--primary);">Grades Distribution Graph</h3>
-                        <div id="bell-curve-container"
-                            style="display: flex; align-items: flex-end; justify-content: space-around; gap: 0.5rem; height: 200px; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+                        <div style="overflow-x: auto; padding-bottom: 1rem;">
+                            <div id="bell-curve-container"
+                                style="display: flex; align-items: flex-end; justify-content: space-around; gap: 0.5rem; height: 200px; padding: 1rem; background: #f8fafc; border-radius: 0.5rem; min-width: 600px;">
+                            </div>
                         </div>
                     </div>
                 </div>

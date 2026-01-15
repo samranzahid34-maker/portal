@@ -94,8 +94,8 @@
     <nav class="navbar">
         <div class="logo">Admin</div>
         <div class="nav-links">
-            <a href="/">Student View</a>
-            <a href="#" onclick="logout()" id="logout-btn" style="display:none">Logout</a>
+            <button id="logout-btn" onclick="logout()"
+                style="display:none; background:none; border:none; color:inherit; cursor:pointer;">Logout</button>
         </div>
     </nav>
 
@@ -106,7 +106,8 @@
             <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
             <a href="#" class="sidebar-link" onclick="switchTab('statistics', this)">Stat & Grades</a>
             <button onclick="refreshData()" class="btn-primary"
-                style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem">↻ Refresh Data</button>
+                style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem; background: #000000; border: 1px solid #333;">↻
+                Refresh Data</button>
             <!-- <a href="#" class="sidebar-link">Settings</a> -->
         </aside>
 

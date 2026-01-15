@@ -155,7 +155,7 @@
     </div>
 
     <!-- Student Dashboard with Sidebar (Hidden by default) -->
-    <div id="marks-section" class="hidden" style="display: flex; min-height: 100vh; background: #f8fafc;">
+    <div id="marks-section" class="hidden" style="display: none; min-height: 100vh; background: #f8fafc;">
         <!-- Left Sidebar -->
         <aside id="subjects-sidebar"
             style="width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 4px 0 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; left: 0; z-index: 50;">
@@ -528,6 +528,7 @@
         } else {
             // Ensure auth is visible
             document.getElementById('auth-container').style.display = 'flex';
+            document.getElementById('marks-section').style.display = 'none';
         }
     </script>
 </body>

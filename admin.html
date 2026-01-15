@@ -964,15 +964,31 @@
                     // Update Sections Table
                     const tbody = document.getElementById('dash-sections-body');
                     if (data.sections.length > 0) {
-                        tbody.innerHTML = data.sections.map(sec => `
-                            <tr style="border-bottom:1px solid #f1f5f9; hover:background:#f8fafc;">
-                                <td style="padding:1.2rem; font-weight:500;">${sec.name}</td>
-                                <td style="padding:1.2rem; text-align:center;">${sec.totalStudents}</td>
-                                <td style="padding:1.2rem; text-align:center; font-weight:600; color:#3b82f6;">${sec.classAverage}</td>
-                                <td style="padding:1.2rem; text-align:center; color:#10b981;">${sec.highest}</td>
-                                <td style="padding:1.2rem; text-align:center; color:#f43f5e;">${sec.lowest}</td>
-                            </tr>
-                        `).join('');
+                        tbody.innerHTML = data.sections.map(sec => {
+                            if (sec.error) {
+                                return `
+                                    <tr style="border-bottom:1px solid #f1f5f9; background: #fef2f2;">
+                                        <td style="padding:1.2rem; font-weight:500;">
+                                            ${sec.name}
+                                            <div style="font-size:0.75rem; color:#ef4444; margin-top:0.25rem;">${sec.error}</div>
+                                        </td>
+                                        <td style="padding:1.2rem; text-align:center; color:#ef4444;">-</td>
+                                        <td style="padding:1.2rem; text-align:center; color:#ef4444;">Error</td>
+                                        <td style="padding:1.2rem; text-align:center;">-</td>
+                                        <td style="padding:1.2rem; text-align:center;">-</td>
+                                    </tr>
+                                `;
+                            }
+                            return `
+                                <tr style="border-bottom:1px solid #f1f5f9; hover:background:#f8fafc;">
+                                    <td style="padding:1.2rem; font-weight:500;">${sec.name}</td>
+                                    <td style="padding:1.2rem; text-align:center;">${sec.totalStudents}</td>
+                                    <td style="padding:1.2rem; text-align:center; font-weight:600; color:#3b82f6;">${sec.classAverage}</td>
+                                    <td style="padding:1.2rem; text-align:center; color:#10b981;">${sec.highest}</td>
+                                    <td style="padding:1.2rem; text-align:center; color:#f43f5e;">${sec.lowest}</td>
+                                </tr>
+                            `;
+                        }).join('');
                     } else {
                         tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:#64748b;">No sections active</td></tr>';
                     }
@@ -995,8 +1011,12 @@
                 performanceChartInstance.destroy();
             }
 
+            // Performace Chart Data Preparation
+            // Filter out errored sections
+            const validSections = sections.filter(s => !s.error && s.performanceCurve && s.performanceCurve.length > 0);
+
             // Find max number of students to set X-axis
-            const maxStudents = Math.max(...sections.map(s => s.performanceCurve.length), 60); // Min 60 for scale
+            const maxStudents = Math.max(60, ...validSections.map(s => s.performanceCurve.length));
             const labels = Array.from({ length: maxStudents }, (_, i) => i + 1);
 
             // Vibrant colors matching the theme
@@ -1008,7 +1028,7 @@
                 { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' }, // Violet
             ];
 
-            const datasets = sections.map((sec, index) => {
+            const datasets = validSections.map((sec, index) => {
                 // Plot ALL students in sequence (no slice)
                 const dataPoints = sec.performanceCurve;
 

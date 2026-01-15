@@ -1325,9 +1325,23 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     
     sections_data = []
     for i, res in enumerate(results):
+        source_id = sources[i][0]
+        # Use name from config if available, fallback to ID
+        source_name = sources[i][2] if len(sources[i]) > 2 else source_id
+
         if isinstance(res, Exception):
-            # Log failure but continue with other sheets
-            print(f"Dashboard fetch failed for source {sources[i][0]}: {res}")
+            print(f"Dashboard fetch failed for source {source_id}: {res}")
+            # Include failed section so user knows it exists but failed
+            sections_data.append({
+                "id": source_id,
+                "name": f"{source_name} (Error)",
+                "totalStudents": 0,
+                "classAverage": 0,
+                "highest": 0,
+                "lowest": 0,
+                "performanceCurve": [],
+                "error": str(res)
+            })
             continue
             
         if res.get("success"):

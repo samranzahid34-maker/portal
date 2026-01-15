@@ -143,7 +143,7 @@
                 <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
                 <a href="#" class="sidebar-link" onclick="switchTab('statistics', this)">Stat & Grades</a>
                 <button onclick="refreshData()" class="btn-primary"
-                    style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem; background: #000000; border: 1px solid #333;">↻
+                    style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem; background: #000000; border: 1px solid #333;">
                     Refresh Data</button>
             </div>
             <!-- <a href="#" class="sidebar-link">Settings</a> -->
@@ -158,7 +158,7 @@
                         <p id="dashboard-email" style="color: #64748b; font-size: 0.95rem;">Loading profile...</p>
                     </div>
                     <button onclick="loadDashboard()" class="btn-secondary"
-                        style="font-size:0.9rem; background:#000; color:#fff; border:1px solid #333;">↻ Refresh</button>
+                        style="font-size:0.9rem; background:#000; color:#fff; border:1px solid #333;">Refresh</button>
                 </div>
 
                 <!-- Summary Cards -->
@@ -184,7 +184,7 @@
 
                 <!-- Sections Grid/Table -->
                 <h3 style="margin-bottom:1.5rem; color:var(--text); font-weight:600; font-size: 1.25rem;">
-                    📊 Section Performance Overview
+                    Section Performance Overview
                 </h3>
                 <div class="card" style="padding:0; overflow:hidden; max-width:100%; border-radius: 0.8rem;">
                     <table style="width:100%; border-collapse:collapse;">
@@ -281,7 +281,7 @@
                 <div id="grading-config-section"
                     style="display:none; background:white; padding:1.5rem; border-radius:1rem; margin:1.5rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
-                        <h3 style="margin:0; font-size:1.1rem; color:var(--primary)">⚙️ Grading Rules</h3>
+                        <h3 style="margin:0; font-size:1.1rem; color:var(--primary)">Grading Rules</h3>
                         <select id="grading-method" onchange="toggleGradingUI()"
                             style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:0.5rem; font-family:'Outfit'">
                             <option value="automatic">Automatic (University Standard)</option>
@@ -431,7 +431,7 @@
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                 <h3 style="color: var(--primary);">Student Results with Relative Grades</h3>
                                 <button onclick="exportToCSV()" class="btn-secondary"
-                                    style="padding: 0.5rem 1rem; font-size: 0.9rem;">📥 Export CSV</button>
+                                    style="padding: 0.5rem 1rem; font-size: 0.9rem;">Export CSV</button>
                             </div>
                             <div style="overflow-x: auto;">
                                 <table id="stats-table"
@@ -1001,12 +1001,8 @@
                 row.onmouseenter = () => row.style.background = '#f8fafc';
                 row.onmouseleave = () => row.style.background = 'white';
 
-                // Rank badge with medal for top 3
+                // Rank display
                 let rankDisplay = index + 1;
-                if (index === 0) rankDisplay = '🥇';
-                else if (index === 1) rankDisplay = '🥈';
-                else if (index === 2) rankDisplay = '🥉';
-                else rankDisplay = index + 1;
 
                 let rowHTML = `
                     <td style="padding: 1rem 0.5rem; font-weight: 600; font-size: 0.9rem;">${rankDisplay}</td>

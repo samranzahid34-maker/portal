@@ -647,7 +647,7 @@
         </div>
     </div>
 
-    <footer class="site-footer">
+    <footer class="site-footer transparent-footer">
         <div></div>
         <div class="footer-links">
             <span>&copy; 2026 ARK-ONE All rights Reserved</span>
@@ -773,17 +773,20 @@
         }
 
         function checkAuth() {
+            const footer = document.querySelector('.site-footer');
             if (localStorage.getItem('adminToken')) {
                 document.getElementById('admin-auth-container').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'grid';
                 if (document.querySelector('.navbar')) document.querySelector('.navbar').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'inline-block';
+                if (footer) footer.classList.remove('transparent-footer');
                 loadSources();
                 loadDashboard();
             } else {
                 document.getElementById('admin-auth-container').style.display = 'flex';
                 document.getElementById('admin-panel').style.display = 'none';
                 if (document.querySelector('.navbar')) document.querySelector('.navbar').style.display = 'none';
+                if (footer) footer.classList.add('transparent-footer');
             }
         }
 

@@ -176,7 +176,7 @@
         </div>
     </div>
 
-    <footer class="site-footer">
+    <footer class="site-footer transparent-footer">
         <div></div> <!-- Spacer to keep flex layout working if needed, or just let justify-between handle it -->
         <div class="footer-links">
             <span>&copy; 2026 ARK-ONE All rights Reserved</span>
@@ -372,16 +372,19 @@
         }
 
         function showSection(id) {
+            const footer = document.querySelector('.site-footer');
             if (id === 'marks-section') {
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('marks-section').classList.remove('hidden');
                 document.getElementById('marks-section').classList.add('active');
                 document.getElementById('dashboard-nav').style.display = 'flex';
+                if (footer) footer.classList.remove('transparent-footer');
             } else {
                 // Should basically reload, but for logic sake
                 document.getElementById('auth-container').style.display = 'flex';
                 document.getElementById('marks-section').classList.add('hidden');
                 document.getElementById('dashboard-nav').style.display = 'none';
+                if (footer) footer.classList.add('transparent-footer');
             }
         }
 

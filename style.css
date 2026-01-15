@@ -476,3 +476,25 @@ h2 {
         font-size: 0.8rem;
     }
 }
+
+/* Transparent Footer for Login Pages */
+.site-footer.transparent-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: transparent;
+    border-top: none;
+    color: rgba(255, 255, 255, 0.6);
+    z-index: 100;
+    pointer-events: none;
+}
+
+.site-footer.transparent-footer .footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    pointer-events: auto;
+}
+
+.site-footer.transparent-footer .footer-links a:hover {
+    color: white;
+}

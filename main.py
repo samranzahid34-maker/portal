@@ -1291,30 +1291,47 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    # Fetch Real Admin Name from Google Sheet
     admin_name = "Admin"
-    if admin_email:
-        admin_name = admin_email.split('@')[0].replace('.', ' ').title()
+    try:
+        sheet_admins = get_sheet_users("ADMIN_SHEET_ID")
+        admin_user = next((u for u in sheet_admins if u['email'].lower() == admin_email.lower()), None)
+        if admin_user:
+            admin_name = admin_user['name']
+        elif admin_email:
+             admin_name = admin_email.split('@')[0].replace('.', ' ').title()
+    except:
+        pass # Fallback to default "Admin"
 
     sources = get_sheet_sources()
-    sections_data = []
+    import asyncio
+    tasks = []
     
+    # Prepare concurrent fetch tasks
     for source in sources:
-        try:
-            sh_id = source[0]
-            # Reuse get_sheet_statistics logic
-            stats_response = await get_sheet_statistics(sh_id)
-            if stats_response.get("success"):
-                stats = stats_response["statistics"]
-                sections_data.append({
-                    "id": sh_id,
-                    "name": stats_response["sheetName"],
-                    "totalStudents": stats["totalStudents"],
-                    "classAverage": stats["classAverage"],
-                    "highest": stats["highestScore"],
-                    "lowest": stats["lowestScore"]
-                })
-        except Exception:
+        sh_id = source[0]
+        tasks.append(get_sheet_statistics(sh_id))
+            
+    # Execute all fetches in parallel
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    sections_data = []
+    for i, res in enumerate(results):
+        if isinstance(res, Exception):
+            # Log failure but continue with other sheets
+            print(f"Dashboard fetch failed for source {sources[i][0]}: {res}")
             continue
+            
+        if res.get("success"):
+            stats = res["statistics"]
+            sections_data.append({
+                "id": sources[i][0],
+                "name": res["sheetName"],
+                "totalStudents": stats["totalStudents"],
+                "classAverage": stats["classAverage"],
+                "highest": stats["highestScore"],
+                "lowest": stats["lowestScore"]
+            })
 
     total_students = sum(s['totalStudents'] for s in sections_data)
     avg_sum = sum(s['classAverage'] for s in sections_data)

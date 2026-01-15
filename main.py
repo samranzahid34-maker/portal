@@ -753,6 +753,146 @@ async def get_marks(roll_number: str):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
+@app.get("/api/student/subjects/{roll_number:path}")
+async def get_student_subjects(roll_number: str):
+    """
+    Get all subjects (sheets) where a student has marks.
+    Each subject represents a different class taught by a different teacher.
+    """
+    try:
+        if not sheets_service:
+            raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
+
+        # Get all configured sources (from all teachers)
+        sources = get_sheet_sources()
+        student_subjects = []
+        sheet_errors = []
+
+        # Search each sheet for this student
+        for source in sources:
+            if len(source) == 3:
+                sheet_id, range_val, name = source
+            else:
+                sheet_id, range_val = source
+                name = "Unknown"
+
+            try:
+                # Get header row
+                header_row = 1
+                sheet_part = "Sheet1"
+                
+                if "!" in range_val:
+                    parts = range_val.split("!")
+                    sheet_part = parts[0]
+                    range_part = parts[1]
+                else:
+                    range_part = range_val
+
+                # Find start row number
+                import re
+                match = re.search(r'([0-9]+)', range_part)
+                if match:
+                    data_start_row = int(match.group(1))
+                    if data_start_row > 1:
+                        header_row = data_start_row - 1
+                
+                header_range = f"{sheet_part}!{header_row}:{header_row}"
+                
+                header_result = sheets_service.spreadsheets().values().get(
+                    spreadsheetId=sheet_id,
+                    range=header_range
+                ).execute()
+                header_rows = header_result.get('values', [])
+                headers = header_rows[0][2:] if header_rows and len(header_rows[0]) > 2 else []
+
+                # Get data rows
+                result = sheets_service.spreadsheets().values().get(
+                    spreadsheetId=sheet_id,
+                    range=range_val
+                ).execute()
+                rows = result.get('values', [])
+                
+                # Calculate class stats and find student
+                sheet_totals = []
+                student_found = False
+                
+                for row in rows:
+                    if row and len(row) >= 2:
+                        # Calculate total for class average
+                        current_row_total = 0
+                        current_raw_marks = row[2:]
+                        for i, m in enumerate(current_raw_marks):
+                            if i < len(headers):
+                                label = headers[i]
+                                if label.lower() != 'total':
+                                    try:
+                                        if m:
+                                            current_row_total += float(m.replace('%','').strip())
+                                    except: pass
+                        
+                        sheet_totals.append(current_row_total)
+
+                        # Check if this is our student
+                        row_roll = row[0].strip()
+                        if row_roll.lower() == roll_number.lower():
+                            student_found = True
+                            student_name = row[1].strip()
+                            
+                            # Build marks array
+                            marks_array = []
+                            for i, mark in enumerate(current_raw_marks):
+                                if i < len(headers):
+                                    label = headers[i]
+                                    value = mark if mark else '-'
+                                    marks_array.append({"label": label, "value": value})
+                            
+                            # Calculate class average
+                            class_avg = sum(sheet_totals) / len(sheet_totals) if sheet_totals else 0
+                            
+                            # Add this subject to the list
+                            student_subjects.append({
+                                "rollNumber": row_roll,
+                                "name": student_name,
+                                "sheetName": name,
+                                "sheetId": sheet_id,
+                                "marks": marks_array,
+                                "total": current_row_total,
+                                "classAverage": round(class_avg, 2)
+                            })
+                            break  # Found student in this sheet, move to next sheet
+                
+            except Exception as e:
+                print(f"Error reading sheet {name}: {e}")
+                err_str = str(e)
+                if "403" in err_str: 
+                    sheet_errors.append(f"{name}: Permission Denied")
+                elif "404" in err_str: 
+                    sheet_errors.append(f"{name}: Not Found")
+                else: 
+                    sheet_errors.append(f"{name}: {str(e)[:50]}")
+                continue
+
+        # Return results
+        if student_subjects:
+            return {
+                "success": True,
+                "subjects": student_subjects,
+                "totalSubjects": len(student_subjects)
+            }
+        else:
+            error_detail = f"No marks found for student: {roll_number}"
+            if sheet_errors:
+                error_detail += f". Some sheets had errors: {'; '.join(sheet_errors[:3])}"
+            raise HTTPException(status_code=404, detail=error_detail)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
+
 @app.post("/api/admin/register")
 async def register_admin(admin: AdminRegister):
     hashed_password = get_password_hash(admin.password)
@@ -1512,7 +1652,53 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
         "sections": sections_data
     }
 
+# Serve static files
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+@app.get("/")
+async def serve_index():
+    """Serve the student portal index page"""
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+@app.get("/admin.html")
+async def serve_admin():
+    """Serve the admin portal page"""
+    return FileResponse(os.path.join(BASE_DIR, "admin.html"))
+
+@app.get("/privacy.html")
+async def serve_privacy():
+    """Serve the privacy policy page"""
+    return FileResponse(os.path.join(BASE_DIR, "privacy.html"))
+
+@app.get("/terms.html")
+async def serve_terms():
+    """Serve the terms of use page"""
+    return FileResponse(os.path.join(BASE_DIR, "terms.html"))
+
+@app.get("/style.css")
+async def serve_style():
+    """Serve the main stylesheet"""
+    return FileResponse(os.path.join(BASE_DIR, "style.css"))
+
+@app.get("/script.js")
+async def serve_script():
+    """Serve the main script"""
+    return FileResponse(os.path.join(BASE_DIR, "script.js"))
+
+@app.get("/student-side.png")
+async def serve_student_image():
+    """Serve the student side image"""
+    return FileResponse(os.path.join(BASE_DIR, "student-side.png"))
+
+@app.get("/admin.png")
+async def serve_admin_image():
+    """Serve the admin image"""
+    return FileResponse(os.path.join(BASE_DIR, "admin.png"))
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+

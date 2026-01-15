@@ -157,23 +157,55 @@
         </div>
     </div>
 
-    <!-- Marks Display Section (Hidden by default, standard white layout) -->
-    <div id="marks-section" class="container section hidden"
-        style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
-        <div class="header-row">
-            <h1>WELCOME BACK</h1>
-            <button class="btn-logout" onclick="logout()">Logout</button>
-        </div>
+    <!-- Student Dashboard with Sidebar (Hidden by default) -->
+    <div id="marks-section" class="hidden" style="display: flex; min-height: 100vh; background: #f8fafc;">
+        <!-- Left Sidebar -->
+        <aside id="subjects-sidebar"
+            style="width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 4px 0 12px rgba(0,0,0,0.1);">
+            <!-- Student Info in Sidebar -->
+            <div
+                style="padding: 0 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem;">
+                <h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #60a5fa;">Welcome Back
+                </h2>
+                <h3 id="sidebar-name" style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.3rem; color: white;">
+                    Student Name</h3>
+                <p id="sidebar-roll" style="font-size: 0.9rem; opacity: 0.7; margin: 0;">Roll No: -</p>
+            </div>
 
-        <div class="student-info-card">
-            <h3 id="display-name">Student Name</h3>
-            <p id="display-roll">Roll No: 12345</p>
-            <p id="display-sheet" style="font-size: 0.9rem; margin-top: 0.2rem; opacity: 0.9;">Section: -</p>
-        </div>
+            <!-- Subjects List -->
+            <div style="padding: 0 1rem;">
+                <h4
+                    style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; margin-bottom: 1rem; padding: 0 0.5rem;">
+                    Your Subjects</h4>
+                <div id="subjects-list">
+                    <!-- Subject items will be injected here -->
+                </div>
+            </div>
+        </aside>
 
-        <div class="marks-grid" id="marks-container">
-            <!-- Marks injected here -->
-        </div>
+        <!-- Main Content Area -->
+        <main style="margin-left: 280px; flex: 1; padding: 2rem 3rem;">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">My Dashboard</h1>
+                    <p style="color: #64748b; margin-top: 0.5rem;">View your academic performance</p>
+                </div>
+                <button class="btn-logout" onclick="logout()"
+                    style="padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">Logout</button>
+            </div>
+
+            <!-- Content Container -->
+            <div id="marks-container">
+                <!-- Default welcome message -->
+                <div id="welcome-message"
+                    style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+                    <h2 style="color: #1e293b; margin-bottom: 0.5rem;">Welcome to Your Dashboard</h2>
+                    <p style="color: #64748b;">Select a subject from the sidebar to view your marks</p>
+                </div>
+            </div>
+        </main>
     </div>
 
     <footer class="site-footer transparent-footer">
@@ -289,74 +321,47 @@
 
         async function loadMarks(rollNumber) {
             try {
-                const res = await fetch(`${API_URL}/marks/${rollNumber}`);
+                // Fetch all subjects (sheets) where this student has marks
+                const res = await fetch(`${API_URL}/student/subjects/${rollNumber}`);
                 const data = await res.json();
 
-                if (data.success) {
-                    const s = data.student;
-                    document.getElementById('display-name').textContent = s.name;
-                    document.getElementById('display-roll').textContent = `Roll No: ${s.rollNumber}`;
-                    document.getElementById('display-sheet').textContent = `Section: ${s.sheetName || 'N/A'}`;
+                if (data.success && data.subjects && data.subjects.length > 0) {
+                    const studentInfo = data.subjects[0]; // Get student info from first subject
 
-                    const container = document.getElementById('marks-container');
+                    // Update sidebar student info
+                    document.getElementById('sidebar-name').textContent = studentInfo.name;
+                    document.getElementById('sidebar-roll').textContent = `Roll No: ${studentInfo.rollNumber}`;
 
+                    // Populate subjects sidebar
+                    const subjectsList = document.getElementById('subjects-list');
+                    subjectsList.innerHTML = '';
 
-
-                    // Create Split Layout (Table Left, Average Right)
-                    let htmlContent = `
-                        <div class="results-layout" style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
-                            <!-- Left Side: Marks Table (Takes available space) -->
-                            <div style="flex: 1; min-width: 300px;">
-                                <div class="marks-table-wrapper">
-                                    <table class="marks-table">
-                                        <tbody>
-                    `;
-
-                    // Add rows dynamically
-                    if (Array.isArray(s.marks) && s.marks.length > 0) {
-                        s.marks.forEach(item => {
-                            htmlContent += `
-                                <tr>
-                                    <th style="width: 60%;">${item.label}</th>
-                                    <td>${item.value}</td>
-                                </tr>
-                            `;
-                        });
-
-                        // Total Row (Inside Table)
-                        htmlContent += `
-                            <tr>
-                                <th class="total-header">Obtained Marks</th>
-                                <td class="total-cell"><strong>${s.total ? s.total.toFixed(2) : 0}</strong></td>
-                            </tr>
+                    data.subjects.forEach((subject, index) => {
+                        const subjectBtn = document.createElement('button');
+                        subjectBtn.className = 'subject-btn';
+                        subjectBtn.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 40px; height: 40px; background: rgba(96, 165, 250, 0.2); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                    📖
+                                </div>
+                                <div style="text-align: left; flex: 1;">
+                                    <div style="font-weight: 600; font-size: 0.95rem;">${subject.sheetName}</div>
+                                    <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 0.2rem;">Click to view</div>
+                                </div>
+                            </div>
                         `;
-                    } else {
-                        htmlContent += `<tr><td colspan="2">No marks found</td></tr>`;
-                    }
+                        subjectBtn.onclick = () => displaySubjectMarks(subject);
+                        subjectsList.appendChild(subjectBtn);
+                    });
 
-                    htmlContent += `
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <!-- Right Side: Class Average Box -->
-                            <div style="flex: 0 0 280px; min-width: 250px;">
-                                <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); color: white; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4); border-radius: 1rem; margin-top: 0;">
-                                    <div style="font-size: 0.9rem; font-weight: 500; opacity: 0.9; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">Overall Class<br>Average Marks</div>
-                                    <div style="font-size: 3.5rem; font-weight: 800; line-height: 1;">${s.classAverage || 0}</div>
-                                    <div style="margin-top: 1rem; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; width: 50%; margin-left: auto; margin-right: auto;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    container.innerHTML = htmlContent;
+                    // Auto-select first subject
+                    displaySubjectMarks(data.subjects[0]);
                 } else {
+                    // No marks found
                     document.getElementById('marks-container').innerHTML = `
                         <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px; margin-top: 1rem;">
-                            <strong>Result Not Available</strong><br>
-                            <span style="font-size: 0.9em">${data.detail || 'Please contact admin to upload results.'}</span>
+                            <strong>No Results Available</strong><br>
+                            <span style="font-size: 0.9em">${data.detail || 'No marks found for your roll number.'}</span>
                         </div>
                     `;
                 }
@@ -371,17 +376,97 @@
             }
         }
 
+        function displaySubjectMarks(subject) {
+            // Highlight selected subject
+            document.querySelectorAll('.subject-btn').forEach(btn => {
+                btn.style.background = 'transparent';
+                btn.style.borderLeft = '3px solid transparent';
+            });
+            event.target.closest('.subject-btn').style.background = 'rgba(96, 165, 250, 0.1)';
+            event.target.closest('.subject-btn').style.borderLeft = '3px solid #60a5fa';
+
+            const container = document.getElementById('marks-container');
+
+            // Create marks display
+            let htmlContent = `
+                <div style="background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <!-- Subject Header -->
+                    <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0;">
+                        <h2 style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0;">${subject.sheetName}</h2>
+                        <p style="color: #64748b; margin-top: 0.5rem;">Subject Marks Breakdown</p>
+                    </div>
+
+                    <div class="results-layout" style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+                        <!-- Left Side: Marks Table -->
+                        <div style="flex: 1; min-width: 300px;">
+                            <div class="marks-table-wrapper">
+                                <table class="marks-table" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #f8fafc;">
+                                            <th style="padding: 1rem; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0;">Assessment</th>
+                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0;">Marks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+            `;
+
+            // Add marks rows
+            if (Array.isArray(subject.marks) && subject.marks.length > 0) {
+                subject.marks.forEach(item => {
+                    if (item.label.toLowerCase() !== 'total') {
+                        htmlContent += `
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 1rem; color: #1e293b; font-weight: 500;">${item.label}</td>
+                                <td style="padding: 1rem; text-align: center; color: #0f172a; font-weight: 600; font-size: 1.1rem;">${item.value}</td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                // Total Row
+                htmlContent += `
+                    <tr style="background: #f1f5f9; font-weight: 700;">
+                        <td style="padding: 1rem; color: #1e293b;">Total Obtained</td>
+                        <td style="padding: 1rem; text-align: center; color: #0f172a; font-size: 1.2rem;">${subject.total ? subject.total.toFixed(2) : 0}</td>
+                    </tr>
+                `;
+            } else {
+                htmlContent += `<tr><td colspan="2" style="padding: 2rem; text-align: center; color: #64748b;">No marks data available</td></tr>`;
+            }
+
+            htmlContent += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Class Average -->
+                        <div style="flex: 0 0 280px; min-width: 250px;">
+                            <div style="text-align: center; padding: 2.5rem 1.5rem; background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); color: white; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4); border-radius: 1rem;">
+                                <div style="font-size: 0.9rem; font-weight: 500; opacity: 0.9; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">Class Average</div>
+                                <div style="font-size: 3.5rem; font-weight: 800; line-height: 1;">${subject.classAverage || 0}</div>
+                                <div style="margin-top: 1rem; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; width: 50%; margin-left: auto; margin-right: auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = htmlContent;
+        }
+
         function showSection(id) {
             const footer = document.querySelector('.site-footer');
             if (id === 'marks-section') {
                 document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('marks-section').style.display = 'flex';
                 document.getElementById('marks-section').classList.remove('hidden');
-                document.getElementById('marks-section').classList.add('active');
                 document.getElementById('dashboard-nav').style.display = 'flex';
                 if (footer) footer.classList.remove('transparent-footer');
             } else {
                 // Should basically reload, but for logic sake
                 document.getElementById('auth-container').style.display = 'flex';
+                document.getElementById('marks-section').style.display = 'none';
                 document.getElementById('marks-section').classList.add('hidden');
                 document.getElementById('dashboard-nav').style.display = 'none';
                 if (footer) footer.classList.add('transparent-footer');

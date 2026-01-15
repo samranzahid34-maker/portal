@@ -951,50 +951,52 @@
                 });
                 const data = await res.json();
 
-                if (data.success) {
-                    // Update Profile
-                    document.getElementById('dashboard-welcome').textContent = `Welcome, ${data.admin.name}`;
-                    document.getElementById('dashboard-email').textContent = data.admin.email;
+                // Updated to match new API response structure
+                // Backend returns: { adminName, adminEmail, totalStudents, overallAverage, highestMarks, lowestMarks, sections }
 
-                    // Update Summary Cards
-                    document.getElementById('dash-total-students').textContent = data.summary.totalStudents;
+                // Update Profile
+                document.getElementById('dashboard-welcome').textContent = `Welcome, ${data.adminName || 'Admin'}`;
+                document.getElementById('dashboard-email').textContent = data.adminEmail || '';
 
-                    document.getElementById('dash-active-sections').textContent = data.summary.activeSections;
+                // Update Summary Cards
+                document.getElementById('dash-total-students').textContent = data.totalStudents || 0;
+                document.getElementById('dash-active-sections').textContent = data.sections?.length || 0;
 
-                    // Render Performance Chart
+                // Render Performance Chart
+                if (data.sections) {
                     renderPerformanceChart(data.sections);
+                }
 
-                    // Update Sections Table
-                    const tbody = document.getElementById('dash-sections-body');
-                    if (data.sections.length > 0) {
-                        tbody.innerHTML = data.sections.map(sec => {
-                            if (sec.error) {
-                                return `
-                                    <tr style="border-bottom:1px solid #f1f5f9; background: #fef2f2;">
-                                        <td style="padding:1.2rem; font-weight:500;">
-                                            ${sec.name}
-                                            <div style="font-size:0.75rem; color:#ef4444; margin-top:0.25rem;">${sec.error}</div>
-                                        </td>
-                                        <td style="padding:1.2rem; text-align:center; color:#ef4444;">-</td>
-                                        <td style="padding:1.2rem; text-align:center; color:#ef4444;">Error</td>
-                                        <td style="padding:1.2rem; text-align:center;">-</td>
-                                        <td style="padding:1.2rem; text-align:center;">-</td>
-                                    </tr>
-                                `;
-                            }
+                // Update Sections Table
+                const tbody = document.getElementById('dash-sections-body');
+                if (data.sections && data.sections.length > 0) {
+                    tbody.innerHTML = data.sections.map(sec => {
+                        if (sec.error) {
                             return `
-                                <tr style="border-bottom:1px solid #f1f5f9; hover:background:#f8fafc;">
-                                    <td style="padding:1.2rem; font-weight:500;">${sec.name}</td>
-                                    <td style="padding:1.2rem; text-align:center;">${sec.totalStudents}</td>
-                                    <td style="padding:1.2rem; text-align:center; font-weight:600; color:#3b82f6;">${sec.classAverage}</td>
-                                    <td style="padding:1.2rem; text-align:center; color:#10b981;">${sec.highest}</td>
-                                    <td style="padding:1.2rem; text-align:center; color:#f43f5e;">${sec.lowest}</td>
+                                <tr style="border-bottom:1px solid #f1f5f9; background: #fef2f2;">
+                                    <td style="padding:1.2rem; font-weight:500;">
+                                        ${sec.name}
+                                        <div style="font-size:0.75rem; color:#ef4444; margin-top:0.25rem;">${sec.error}</div>
+                                    </td>
+                                    <td style="padding:1.2rem; text-align:center; color:#ef4444;">-</td>
+                                    <td style="padding:1.2rem; text-align:center; color:#ef4444;">Error</td>
+                                    <td style="padding:1.2rem; text-align:center;">-</td>
+                                    <td style="padding:1.2rem; text-align:center;">-</td>
                                 </tr>
                             `;
-                        }).join('');
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:#64748b;">No sections active</td></tr>';
-                    }
+                        }
+                        return `
+                            <tr style="border-bottom:1px solid #f1f5f9; hover:background:#f8fafc;">
+                                <td style="padding:1.2rem; font-weight:500;">${sec.name}</td>
+                                <td style="padding:1.2rem; text-align:center;">${sec.totalStudents}</td>
+                                <td style="padding:1.2rem; text-align:center; font-weight:600; color:#3b82f6;">${sec.classAverage}</td>
+                                <td style="padding:1.2rem; text-align:center; color:#10b981;">${sec.highest}</td>
+                                <td style="padding:1.2rem; text-align:center; color:#f43f5e;">${sec.lowest}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:#64748b;">No sections active</td></tr>';
                 }
             } catch (e) {
                 console.error("Dashboard Load Error", e);

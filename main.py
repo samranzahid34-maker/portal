@@ -896,9 +896,20 @@ async def refresh_data():
     return {"success": True, "message": "Data refreshed from Google Sheets"}
 
 @app.get("/api/admin/sources")
-async def get_sources():
-    # 1. Get Permanent Sources
-    sources = get_sheet_sources()
+async def get_sources(authorization: str = Header(None)):
+    admin_email = None
+    
+    # Extract email from token if provided
+    if authorization:
+        try:
+            scheme, _, param = authorization.partition(" ")
+            payload = jwt.decode(param, SECRET_KEY, algorithms=[ALGORITHM])
+            admin_email = payload.get("email")
+        except:
+            pass  # If token invalid, return all sources (or none for security)
+    
+    # 1. Get Sources (Filtered by owner if admin_email exists)
+    sources = get_sheet_sources(admin_email)
     
     # Format for frontend
     data = [{"sheetId": s[0], "range": s[1], "name": s[2] if len(s) > 2 else s[0][:15] + "..."} for s in sources]

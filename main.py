@@ -72,6 +72,17 @@ def init_db():
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Manual Grades table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS manual_grades (
+                sheet_id TEXT NOT NULL,
+                roll_number TEXT NOT NULL,
+                grade TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (sheet_id, roll_number)
+            )
+        ''')
 
         # Initialize Default Admin if Env Vars set (Persistence for Vercel)
         admin_email = os.getenv("ADMIN_EMAIL")
@@ -278,6 +289,14 @@ class GradingConfig(BaseModel):
     method: str = "automatic"
     ranges: Optional[Dict[str, float]] = None
     limits: Optional[Dict[str, int]] = None
+
+class ManualGradeEntry(BaseModel):
+    rollNumber: str
+    grade: str
+
+class ManualGradesPayload(BaseModel):
+    sheetId: str
+    grades: List[ManualGradeEntry]
 
 
 # Helper functions
@@ -941,14 +960,44 @@ def calculate_relative_grade(score, all_scores, student_index=None):
     else:  # Bottom 5%
         return "F"
 
-def calculate_custom_grade(score, all_scores, config: GradingConfig):
+@app.post("/api/admin/save-manual-grades")
+async def save_manual_grades(payload: ManualGradesPayload):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Use transaction
+        for entry in payload.grades:
+            cursor.execute('''
+                INSERT INTO manual_grades (sheet_id, roll_number, grade) 
+                VALUES (?, ?, ?)
+                ON CONFLICT(sheet_id, roll_number) 
+                DO UPDATE SET grade=excluded.grade, updated_at=CURRENT_TIMESTAMP
+            ''', (payload.sheetId, entry.rollNumber, entry.grade))
+        conn.commit()
+        return {"success": True, "message": "Manual grades saved successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save grades: {str(e)}")
+    finally:
+        conn.close()
+
+def get_manual_overrides(sheet_id: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT roll_number, grade FROM manual_grades WHERE sheet_id = ?", (sheet_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {row['roll_number']: row['grade'] for row in rows}
+
+def calculate_custom_grade(score, all_scores, config: GradingConfig, roll_number=None, manual_overrides=None):
     if not all_scores or score is None:
         return "N/A"
     
-    # 1. Manual (Placeholder - usually handled via direct edits/upload)
+    # 1. Manual
     if config.method == 'manual':
-        # In a real manual system, we'd lookup a stored override.
-        # For now, fallback to relative or return empty to allow UI entry.
+        if manual_overrides and roll_number and roll_number in manual_overrides:
+            return manual_overrides[roll_number]
+        # Fallback to current relative grade if no manual override exists yet
         return calculate_relative_grade(score, all_scores)
 
     # 2. Percentage Based
@@ -1239,9 +1288,20 @@ async def calculate_grades_endpoint(config: GradingConfig):
         class_average = sum(all_totals) / len(all_totals) if all_totals else 0
         subject_averages = {k: sum(v)/len(v) for k, v in subject_totals.items() if v}
         
+        # Determine overrides once
+        manual_overrides = None
+        if config.method == 'manual':
+            manual_overrides = get_manual_overrides(config.sheetId)
+
         # Assign Custom Grades
         for student in students:
-            student['grade'] = calculate_custom_grade(student['total'], all_totals, config)
+            student['grade'] = calculate_custom_grade(
+                student['total'], 
+                all_totals, 
+                config, 
+                roll_number=student['rollNumber'], 
+                manual_overrides=manual_overrides
+            )
             current_marks_maximum = 55
             student['percentage'] = round((student['total'] / current_marks_maximum) * 100, 2) if current_marks_maximum > 0 else 0
         

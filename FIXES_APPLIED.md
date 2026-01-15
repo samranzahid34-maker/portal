@@ -305,3 +305,17 @@ F:  2 students (6.7%)   ████
 - ✅ Corrected the function call to `displayStatistics(data)`.
 
 **Result**: All grading rules now work correctly without connection errors.
+
+---
+
+### 5. ❌ **No Manual Grade Entry Feature** → ✅ **FIXED**
+
+**Problem**: The "Manual Assignment" option existed in the dropdown, but there was no interface to actually enter or update grades manually.
+
+**Solution**:
+- ✅ **Interactive Table**: When "Manual Assignment" is selected and "Apply Rules" is clicked, the table's "Grade" column transforms into editable input fields.
+- ✅ **Backend Storage**: Created a new database table `manual_grades` to persist these overrides (indexed by sheet and roll number).
+- ✅ **Save Functionality**: Added a "Save Manual Grades" button that collects all inputs and saves them to the server.
+- ✅ **Seamless Integration**: The system prioritizes manual overrides when the "Manual" grading method is active, falling back to calculated grades if no override exists.
+
+**Result**: Admins can now fully control grades by manually editing them directly in the results table.

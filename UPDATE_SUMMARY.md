@@ -312,3 +312,18 @@ Users reported a "Connection error" when trying to apply grading rules:
 - Corrected the data structure passed to `displayStatistics`.
 
 **Result**: All grading functionalities (Percentage, Class Limits, Manual) now work flawlessly! 🚀
+
+---
+
+## 🛠️ Feature Addition (Manual Grading)
+
+### ❌ The Issue
+The "Manual Assignment" option was a placeholder with no user interface to actually input grades.
+
+### ✅ The Solution
+Implemented a complete manual grading workflow:
+1.  **Editable UI**: Selecting "Manual Assignment" transforms the results table Grade column into editable input fields.
+2.  **Persistence**: Grades are saved to a new persistent database table `manual_grades`.
+3.  **Priority**: Manual overrides strictly take precedence over automatic calculations when the manual mode is active.
+
+**Result**: Admins can now override any grade manually with full persistence!

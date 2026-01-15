@@ -1005,6 +1005,64 @@ async def add_source(source: AddSource, token: str = Header(..., alias="Authoriz
         # Show the EXACT error instead of falling back silently
         raise HTTPException(status_code=500, detail=f"Failed to save source permanently: {msg}. Please ensure the 'Sources' tab exists in your Admin Google Sheet.")
 
+class DeleteSource(BaseModel):
+    sheetId: str
+
+@app.post("/api/admin/delete-source")
+async def delete_source(data: DeleteSource):
+    config_sheet_id = os.getenv("ADMIN_SHEET_ID")
+    if not config_sheet_id or not sheets_service:
+        raise HTTPException(status_code=500, detail="Services not configured")
+
+    try:
+        # Read all sources
+        result = sheets_service.spreadsheets().values().get(
+            spreadsheetId=config_sheet_id,
+            range="Sources!A:C"
+        ).execute()
+        rows = result.get('values', [])
+        
+        if not rows:
+             return {"success": True, "message": "No sources to delete"}
+
+        # Filter out the matching row
+        # Keep header row (index 0)
+        new_rows = [rows[0]] if rows else []
+        found = False
+        
+        for idx, row in enumerate(rows):
+            if idx == 0: continue
+            # Check sheet ID (Column A)
+            if len(row) > 0 and row[0].strip() == data.sheetId:
+                found = True
+                continue # Skip this row (delete)
+            new_rows.append(row)
+            
+        if not found:
+            raise HTTPException(status_code=404, detail="Source not found")
+
+        # Clear the sheet first to remove old data
+        sheets_service.spreadsheets().values().clear(
+            spreadsheetId=config_sheet_id,
+            range="Sources!A:C"
+        ).execute()
+
+        # Write back the kept rows
+        body = {"values": new_rows}
+        sheets_service.spreadsheets().values().update(
+            spreadsheetId=config_sheet_id,
+            range="Sources!A1",
+            valueInputOption="RAW",
+            body=body
+        ).execute()
+        
+        fetch_students_from_sheets()
+        return {"success": True, "message": "Source deleted successfully"}
+
+    except Exception as e:
+        print(f"Delete failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+
 @app.post("/api/admin/update-source")
 async def update_source(data: UpdateSource):
     # 1. Get current config sheet range

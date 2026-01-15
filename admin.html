@@ -825,6 +825,10 @@
                                     class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
                                     Edit
                                 </button>
+                                <button onclick="deleteSource('${s.sheetId}')" 
+                                    class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; color: #ef4444; background: #fef2f2; border: 1px solid #fee2e2;">
+                                    Delete
+                                </button>
                                 <a href="https://docs.google.com/spreadsheets/d/${s.sheetId}" target="_blank" 
                                    class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration: none; display: inline-block;">
                                    Open ↗
@@ -839,6 +843,30 @@
         }
 
         let currentEditId = null;
+
+
+        async function deleteSource(id) {
+            if (!confirm('Are you sure you want to delete this source? This action cannot be undone.')) return;
+
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_URL}/delete-source`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ sheetId: id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Source deleted successfully');
+                    loadSources();
+                } else {
+                    alert('Error: ' + (data.detail || data.message || 'Deletion failed'));
+                }
+            } catch (e) { alert('Connection error'); }
+        }
 
         function openEditModal(id, name, range) {
             currentEditId = id;

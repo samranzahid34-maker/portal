@@ -801,8 +801,11 @@
         }
 
         async function loadSources() {
+            const token = localStorage.getItem('adminToken');
             try {
-                const res = await fetch(`${API_URL}/sources`);
+                const res = await fetch(`${API_URL}/sources`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const data = await res.json();
                 if (data.success && data.sources) {
                     const list = document.getElementById('source-list');
@@ -1097,8 +1100,11 @@
         let currentStatsData = null; // Store current statistics data for export
 
         async function populateSheetSelector() {
+            const token = localStorage.getItem('adminToken');
             try {
-                const res = await fetch(`${API_URL}/sources`);
+                const res = await fetch(`${API_URL}/sources`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const data = await res.json();
 
                 const select = document.getElementById('stats-sheet-select');

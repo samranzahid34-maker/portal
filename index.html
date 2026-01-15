@@ -412,11 +412,11 @@
                         <!-- Left Side: Marks Table -->
                         <div style="flex: 1; min-width: 300px;">
                             <div class="marks-table-wrapper">
-                                <table class="marks-table" style="width: 100%; border-collapse: collapse;">
+                                <table class="marks-table" style="width: 100%; border-collapse: separate; border-spacing: 0 0.8rem;">
                                     <thead>
-                                        <tr style="background: #374151;">
-                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: white; border-bottom: 2px solid #4b5563;">Assessment</th>
-                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: white; border-bottom: 2px solid #4b5563;">Marks</th>
+                                        <tr>
+                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0; background: transparent;">ASSESSMENT</th>
+                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: #64748b; border-bottom: 2px solid #e2e8f0; background: transparent;">MARKS</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -427,19 +427,19 @@
                 subject.marks.forEach(item => {
                     if (item.label.toLowerCase() !== 'total') {
                         htmlContent += `
-                            <tr style="border-bottom: 1px solid #e2e8f0;">
-                                <td style="padding: 1rem; text-align: center; color: #6366f1; font-weight: 600;">${item.label}</td>
-                                <td style="padding: 1rem; text-align: center; color: #0f172a; font-weight: 600; font-size: 1.1rem;">${item.value}</td>
+                            <tr style="background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2); transition: transform 0.2s;">
+                                <td style="padding: 1.2rem; text-align: center; color: white; font-weight: 600; border-top-left-radius: 0.8rem; border-bottom-left-radius: 0.8rem;">${item.label}</td>
+                                <td style="padding: 1.2rem; text-align: center; color: white; font-weight: 700; font-size: 1.1rem; border-top-right-radius: 0.8rem; border-bottom-right-radius: 0.8rem;">${item.value}</td>
                             </tr>
                         `;
                     }
                 });
 
-                // Total Row
+                // Total Row (Keep distinct)
                 htmlContent += `
-                    <tr style="background: #f1f5f9; font-weight: 700;">
-                        <td style="padding: 1rem; text-align: center; color: #1e293b;">Total Obtained</td>
-                        <td style="padding: 1rem; text-align: center; color: #0f172a; font-size: 1.2rem;">${subject.total ? subject.total.toFixed(2) : 0}</td>
+                    <tr style="background: white; transform: scale(0.98);">
+                        <td style="padding: 1rem; text-align: center; color: #1e293b; font-weight: 700; border-top: 2px solid #e2e8f0;">Total Obtained</td>
+                        <td style="padding: 1rem; text-align: center; color: #6366f1; font-weight: 800; font-size: 1.3rem; border-top: 2px solid #e2e8f0;">${subject.total ? subject.total.toFixed(2) : 0}</td>
                     </tr>
                 `;
             } else {

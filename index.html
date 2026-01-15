@@ -320,6 +320,9 @@
         }
 
         async function loadMarks(rollNumber) {
+            const marksContainer = document.getElementById('marks-container');
+            marksContainer.innerHTML = '<div style="text-align: center; padding: 2rem; color: #64748b;">Loading marks details...</div>';
+
             try {
                 // Fetch all subjects (sheets) where this student has marks
                 const res = await fetch(`${API_URL}/student/subjects/${rollNumber}`);
@@ -339,8 +342,9 @@
                     data.subjects.forEach((subject, index) => {
                         const subjectBtn = document.createElement('button');
                         subjectBtn.className = 'subject-btn';
+                        subjectBtn.dataset.viewIndex = index; // Store index to easily find it
                         subjectBtn.innerHTML = `
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; pointer-events: none;">
                                 <div style="width: 40px; height: 40px; background: rgba(96, 165, 250, 0.2); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                                     📖
                                 </div>
@@ -350,40 +354,48 @@
                                 </div>
                             </div>
                         `;
-                        subjectBtn.onclick = () => displaySubjectMarks(subject);
+                        // Pass the button element itself so we can highlight it
+                        subjectBtn.onclick = (e) => displaySubjectMarks(subject, subjectBtn);
                         subjectsList.appendChild(subjectBtn);
                     });
 
-                    // Auto-select first subject
-                    displaySubjectMarks(data.subjects[0]);
+                    // Auto-select first subject by triggering click
+                    if (subjectsList.firstChild) {
+                        subjectsList.firstChild.click();
+                    }
                 } else {
                     // No marks found
-                    document.getElementById('marks-container').innerHTML = `
-                        <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px; margin-top: 1rem;">
-                            <strong>No Results Available</strong><br>
-                            <span style="font-size: 0.9em">${data.detail || 'No marks found for your roll number.'}</span>
+                    marksContainer.innerHTML = `
+                        <div style="text-align: center; padding: 3rem;">
+                            <p style="font-size: 1.2rem; color: #64748b;">No marks found for this roll number.</p>
+                            <button onclick="showSection('login-section')" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #6366f1; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">Go Back</button>
                         </div>
                     `;
                 }
             } catch (err) {
-                console.error("Failed to load marks", err);
-                document.getElementById('marks-container').innerHTML = `
-                    <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fee2e2; border-radius: 8px; margin-top: 1rem;">
-                        <strong>System Error</strong><br>
-                        <span style="font-size: 0.9em">${err.message || 'Connection failed'}</span>
-                    </div>
-                `;
+                console.error(err);
+                marksContainer.innerHTML = '<div style="text-align: center; color: #ef4444;">Failed to load marks. Please try again.</div>';
             }
         }
 
-        function displaySubjectMarks(subject) {
+        function displaySubjectMarks(subject, activeBtn) {
             // Highlight selected subject
             document.querySelectorAll('.subject-btn').forEach(btn => {
                 btn.style.background = 'transparent';
                 btn.style.borderLeft = '3px solid transparent';
             });
-            event.target.closest('.subject-btn').style.background = 'rgba(96, 165, 250, 0.1)';
-            event.target.closest('.subject-btn').style.borderLeft = '3px solid #60a5fa';
+
+            if (activeBtn) {
+                activeBtn.style.background = 'rgba(96, 165, 250, 0.1)';
+                activeBtn.style.borderLeft = '3px solid #60a5fa';
+            } else {
+                // Fallback if no button passed
+                const firstBtn = document.querySelector('.subject-btn');
+                if (firstBtn) {
+                    firstBtn.style.background = 'rgba(96, 165, 250, 0.1)';
+                    firstBtn.style.borderLeft = '3px solid #60a5fa';
+                }
+            }
 
             const container = document.getElementById('marks-container');
 

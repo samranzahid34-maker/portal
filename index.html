@@ -402,9 +402,9 @@
                             <div class="marks-table-wrapper">
                                 <table class="marks-table" style="width: 100%; border-collapse: collapse;">
                                     <thead>
-                                        <tr style="background: #f8fafc;">
-                                            <th style="padding: 1rem; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0;">Assessment</th>
-                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0;">Marks</th>
+                                        <tr style="background: #374151;">
+                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: white; border-bottom: 2px solid #4b5563;">Assessment</th>
+                                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: white; border-bottom: 2px solid #4b5563;">Marks</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -416,7 +416,7 @@
                     if (item.label.toLowerCase() !== 'total') {
                         htmlContent += `
                             <tr style="border-bottom: 1px solid #e2e8f0;">
-                                <td style="padding: 1rem; color: #1e293b; font-weight: 500;">${item.label}</td>
+                                <td style="padding: 1rem; text-align: center; color: #1e293b; font-weight: 500;">${item.label}</td>
                                 <td style="padding: 1rem; text-align: center; color: #0f172a; font-weight: 600; font-size: 1.1rem;">${item.value}</td>
                             </tr>
                         `;
@@ -426,7 +426,7 @@
                 // Total Row
                 htmlContent += `
                     <tr style="background: #f1f5f9; font-weight: 700;">
-                        <td style="padding: 1rem; color: #1e293b;">Total Obtained</td>
+                        <td style="padding: 1rem; text-align: center; color: #1e293b;">Total Obtained</td>
                         <td style="padding: 1rem; text-align: center; color: #0f172a; font-size: 1.2rem;">${subject.total ? subject.total.toFixed(2) : 0}</td>
                     </tr>
                 `;

@@ -19,6 +19,8 @@ body {
     background-color: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .navbar {
@@ -51,8 +53,7 @@ body {
 .container {
     max-width: 1000px;
     margin: 2rem auto;
-    padding: 0 1rem 120px 1rem;
-    /* Added bottom padding for fixed footer */
+    padding: 0 1rem;
 }
 
 /* Card Styling */
@@ -418,19 +419,20 @@ h2 {
 /* Footer Styling */
 /* Footer Styling */
 .site-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
     width: 100%;
-    background: transparent;
-    padding: 0.8rem 2rem;
+    background: #ffffff;
+    /* Default light bg */
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: none;
-    z-index: 1000;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+    color: #64748b;
+    /* Default dark text */
+    margin-top: auto;
+    /* Push to bottom in flex container */
+    z-index: 10;
 }
 
 .footer-links {
@@ -440,52 +442,24 @@ h2 {
 }
 
 .footer-links a {
-    color: rgba(255, 255, 255, 0.9);
+    color: #64748b;
     text-decoration: none;
     transition: color 0.2s;
 }
 
 .footer-links a:hover {
-    color: white;
+    color: var(--primary);
     text-decoration: underline;
 }
 
-/* Dark Text Override for Dashboard (Light Background) */
-.site-footer.dark-text {
-    color: #64748b;
-    background: rgba(255, 255, 255, 0.9);
-    border-top: 1px solid #e2e8f0;
-}
-
-.site-footer.dark-text .footer-links a {
-    color: #64748b;
-}
-
-.site-footer.dark-text .footer-links a:hover {
-    color: #6366f1;
-    text-decoration: none;
-}
-
-/* Removed system-status styles */
+/* Removed specific dark-text override as it is now default */
 
 @media (max-width: 768px) {
     .site-footer {
         flex-direction: column;
         gap: 0.5rem;
-        padding: 1rem;
+        padding: 1.5rem;
         text-align: center;
-        background: #111827;
-        /* Keep it fixed like desktop, but ensure layout handles it */
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-    }
-
-    .site-footer.dark-text {
-        background: white;
-        border-top: 1px solid #e2e8f0;
-        /* Restore border on mobile for separation */
     }
 
     .footer-links {
@@ -493,20 +467,6 @@ h2 {
         flex-wrap: wrap;
         justify-content: center;
         gap: 1rem;
-        font-size: 0.75rem;
-    }
-
-    /* Add padding to scrollable areas so fixed footer doesn't cover content */
-    .split-left {
-        padding-bottom: 140px;
-        /* Extend dark background behind footer */
-    }
-
-    .container {
-        padding-bottom: 140px;
-    }
-
-    .main-content {
-        padding-bottom: 140px;
+        font-size: 0.8rem;
     }
 }

@@ -91,6 +91,10 @@
             justify-content: space-between;
         }
 
+        .mobile-only {
+            display: none;
+        }
+
         /* Desktop Layout (min-width: 769px) */
         @media (min-width: 769px) {
             .admin-layout {
@@ -109,21 +113,33 @@
 
         /* Mobile Layout (max-width: 768px) */
         @media (max-width: 768px) {
+            .mobile-only {
+                display: flex !important;
+            }
+
             .admin-layout {
                 display: block;
-                /* Stack layout, no grid columns */
+                /* Stack layout */
+            }
+
+            .navbar {
+                z-index: 50;
+                /* Ensure navbar stays below high overlays if needed, but sidebar will cover it */
             }
 
             .sidebar {
                 position: fixed;
-                top: 70px;
+                top: 0;
                 left: 0;
-                width: 250px;
-                height: calc(100vh - 70px);
-                z-index: 100;
+                width: 280px;
+                /* Slightly wider for better touch targets */
+                height: 100vh;
+                z-index: 200;
+                /* Above navbar */
                 transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                border-right: 1px solid #374151;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border-right: none;
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
             }
 
             /* Show sidebar when toggled */
@@ -136,12 +152,15 @@
             .admin-layout.sidebar-visible::after {
                 content: '';
                 position: fixed;
-                top: 70px;
+                top: 0;
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 90;
+                background: rgba(0, 0, 0, 0.6);
+                /* Darker overlay */
+                z-index: 150;
+                /* Between sidebar and content/navbar */
+                backdrop-filter: blur(2px);
                 animation: fadeIn 0.3s;
             }
 
@@ -188,6 +207,16 @@
     <div class="admin-layout" id="admin-panel" style="display:none">
         <aside class="sidebar">
             <div class="sidebar-inner">
+                <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;" class="mobile-only">
+                    <button onclick="toggleSidebar()"
+                        style="background:none; border:none; color:white; cursor:pointer;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
                 <a href="#" class="sidebar-link active" onclick="switchTab('dashboard', this)">Dashboard</a>
                 <a href="#" class="sidebar-link" onclick="switchTab('sources', this)">Sheets Source</a>
                 <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
@@ -212,7 +241,7 @@
                 </div>
 
                 <!-- Summary Cards -->
-                <div
+                <div class="card-grid-container"
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
                     <div class="card"
                         style="background:#6366f1; color:white; padding:2rem; border-radius:1rem; box-shadow:0 10px 25px -5px rgba(99, 102, 241, 0.3);">

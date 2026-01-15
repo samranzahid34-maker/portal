@@ -504,14 +504,14 @@
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('marks-section').style.display = 'flex';
                 document.getElementById('marks-section').classList.remove('hidden');
-                document.getElementById('dashboard-nav').style.display = 'flex';
+                // document.getElementById('dashboard-nav').style.display = 'flex'; // Removed
                 if (footer) footer.classList.remove('transparent-footer');
             } else {
-                // Should basically reload, but for logic sake
+                // Show login
                 document.getElementById('auth-container').style.display = 'flex';
                 document.getElementById('marks-section').style.display = 'none';
                 document.getElementById('marks-section').classList.add('hidden');
-                document.getElementById('dashboard-nav').style.display = 'none';
+                // document.getElementById('dashboard-nav').style.display = 'none'; // Removed
                 if (footer) footer.classList.add('transparent-footer');
             }
         }
@@ -528,7 +528,6 @@
         } else {
             // Ensure auth is visible
             document.getElementById('auth-container').style.display = 'flex';
-            document.getElementById('dashboard-nav').style.display = 'none';
         }
     </script>
 </body>

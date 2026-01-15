@@ -1594,7 +1594,7 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    displayStatistics(data.statistics, method);
+                    displayStatistics(data, method);
                     // Feedback handled by UI update
                 } else {
                     alert(data.detail || 'Error calculating grades');

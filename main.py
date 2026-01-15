@@ -1322,7 +1322,7 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
             print(f"Dashboard fetch failed for source {sources[i][0]}: {res}")
             continue
             
-            if res.get("success"):
+        if res.get("success"):
             stats = res["statistics"]
             # Extract and sort student totals for the graph
             student_totals = sorted([s['total'] for s in res['students']], reverse=True)

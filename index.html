@@ -213,8 +213,9 @@
             // RegEx usually expects specific format. Let's stick to standard University format "Session Dept Num" often combined.
             // Given user said "Fa-2022/BSCS/000" in original placeholder, I will use that format or hyphens. 
             // Actually, usually it is "FA22-BSCS-001". But user dropdown has "Fa-2022".
-            // I will use HYPHENS as safest joiner: "Fa-2022-BSCS-001"
-            const rollNumber = `${session}-${dept}-${num}`;
+            // Construct in standard format: Session/Dept/Num (e.g., Fa-2022/BSCS/001)
+            // Using Slashes / to match the previous placeholder default and likely existing data.
+            const rollNumber = `${session}/${dept}/${num}`;
 
             const password = document.getElementById('login-pass').value;
             const btn = e.target.querySelector('button');
@@ -254,7 +255,7 @@
             const dept = document.getElementById('reg-dept').value;
             const session = document.getElementById('reg-session').value;
             const num = document.getElementById('reg-roll-num').value;
-            const rollNumber = `${session}-${dept}-${num}`;
+            const rollNumber = `${session}/${dept}/${num}`;
 
             const name = document.getElementById('reg-name').value;
             const password = document.getElementById('reg-pass').value;

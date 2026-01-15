@@ -1332,52 +1332,27 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
-    tasks = []
+    sections_data = []
     
-    # Prepare concurrent fetch tasks
+    # Execute fetches sequentially to ensure thread-safety/stability of shared Sheets Service
     for source in sources:
-        # source format: (id, range, name)
-        # Safely unpack
         if len(source) == 3:
             sh_id, sh_range, sh_name = source
         else:
             sh_id, sh_range = source
             sh_name = "Unknown"
             
-        tasks.append(loop.run_in_executor(None, _fetch_sheet_statistics_internal, sh_id, sh_range, sh_name))
+        try:
+            # Run in thread but await result before starting next one (Sequential execution)
+            # This prevents "SSL record layer failure" caused by concurrent requests on shared http transport
+            res = await loop.run_in_executor(None, _fetch_sheet_statistics_internal, sh_id, sh_range, sh_name)
             
-    # Execute all fetches in parallel
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    
-    sections_data = []
-    for i, res in enumerate(results):
-        source_id = sources[i][0]
-        # Use name from config if available, fallback to ID
-        source_name = sources[i][2] if len(sources[i]) > 2 else source_id
-
-        if isinstance(res, Exception):
-            print(f"Dashboard fetch failed for source {source_id}: {res}")
-            # Include failed section so user knows it exists but failed
-            sections_data.append({
-                "id": source_id,
-                "name": f"{source_name} (Error)",
-                "totalStudents": 0,
-                "classAverage": 0,
-                "highest": 0,
-                "lowest": 0,
-                "performanceCurve": [],
-                "error": str(res)
-            })
-            continue
-            
-        if res.get("success"):
+            # Success handling
             stats = res["statistics"]
-            # Use preserved sequential totals (sheet order) instead of sorting
             student_totals = stats.get("sequentialTotals", [])
             
             sections_data.append({
-                "id": sources[i][0],
+                "id": sh_id,
                 "name": res["sheetName"],
                 "totalStudents": stats["totalStudents"],
                 "classAverage": stats["classAverage"],
@@ -1385,6 +1360,22 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
                 "lowest": stats["lowestScore"],
                 "performanceCurve": student_totals 
             })
+
+        except Exception as e:
+            print(f"Dashboard fetch failed for source {sh_id}: {e}")
+            sections_data.append({
+                "id": sh_id,
+                "name": f"{sh_name} (Error)",
+                "totalStudents": 0,
+                "classAverage": 0,
+                "highest": 0,
+                "lowest": 0,
+                "performanceCurve": [],
+                "error": str(e)
+            })
+
+    # Results are already processed into sections_data
+    # No need to iterate results again
 
     total_students = sum(s['totalStudents'] for s in sections_data)
     avg_sum = sum(s['classAverage'] for s in sections_data)

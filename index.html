@@ -15,7 +15,13 @@
     <!-- NEW SPLIT SCREEN AUTH LAYOUT -->
     <div id="auth-container" class="split-layout">
         <!-- Left Side: Forms -->
-        <div class="split-left dark-form">
+        <div class="split-left dark-form" style="position: relative;">
+            <!-- Admin Access Button -->
+            <a href="admin.html"
+                style="position: absolute; top: 1.5rem; right: 1.5rem; color: #94a3b8; text-decoration: none; font-size: 0.85rem; padding: 0.4rem 0.8rem; border: 1px solid #334155; border-radius: 0.5rem; transition: all 0.2s; background: rgba(255,255,255,0.03);">
+                Admin Access
+            </a>
+
             <!-- Login Form -->
             <div id="login-form-wrapper">
                 <h2>Login</h2>
@@ -84,11 +90,7 @@
                         </a>
                     </div>
 
-                    <div
-                        style="margin-top: 1.5rem; text-align: center; border-top: 1px solid #374151; padding-top: 1rem;">
-                        <a href="admin.html" style="color: #64748b; text-decoration: none; font-size: 0.85rem;">Admin
-                            Access</a>
-                    </div>
+
                 </form>
             </div>
 

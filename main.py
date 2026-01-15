@@ -689,9 +689,10 @@ async def get_marks(roll_number: str):
                                 label = headers[i]
                                 if label.lower() != 'total':
                                     try:
-                                        if m:
-                                            current_row_total += float(m.replace('%','').strip())
-                                    except: pass
+                                        mark_value = float(m.replace('%','').strip()) if m else 0
+                                        current_row_total += mark_value
+                                    except: 
+                                        pass
                         
                         sheet_totals.append(current_row_total)
 
@@ -826,9 +827,10 @@ async def get_student_subjects(roll_number: str):
                                 label = headers[i]
                                 if label.lower() != 'total':
                                     try:
-                                        if m:
-                                            current_row_total += float(m.replace('%','').strip())
-                                    except: pass
+                                        mark_value = float(m.replace('%','').strip()) if m else 0
+                                        current_row_total += mark_value
+                                    except: 
+                                        pass
                         
                         sheet_totals.append(current_row_total)
 

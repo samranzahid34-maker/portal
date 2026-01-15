@@ -994,7 +994,7 @@ def calculate_custom_grade(score, all_scores, config: GradingConfig):
 
 
 @app.get("/api/admin/sheet-statistics/{sheet_id}")
-async def get_sheet_statistics(sheet_id: str):
+def get_sheet_statistics(sheet_id: str):
     """
     Get all students from a specific sheet with class statistics and relative grades
     """
@@ -1313,15 +1313,22 @@ async def get_dashboard(authorization: Optional[str] = Header(None)):
 
     sources = get_sheet_sources()
     import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
     tasks = []
     
     # Prepare concurrent fetch tasks
     for source in sources:
         sh_id = source[0]
-        tasks.append(get_sheet_statistics(sh_id))
+        tasks.append(loop.run_in_executor(None, get_sheet_statistics, sh_id))
             
     # Execute all fetches in parallel
     results = await asyncio.gather(*tasks, return_exceptions=True)
+
     
     sections_data = []
     for i, res in enumerate(results):

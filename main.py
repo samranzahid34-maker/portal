@@ -371,26 +371,29 @@ def get_sheet_sources(owner_email=None):
         sources = []
         for idx, row in enumerate(rows[1:], 1): # Skip header
             if len(row) >= 1:
-                # Filter by owner if specified
-                # If row has no owner column (legacy), assume public? Or hidden?
-                # Let's show legacy rows to everyone for backward compatibility, 
-                # but rows with owner only to that owner.
-                row_owner = row[3].strip().lower() if len(row) > 3 else None
+                # Get owner email from Column D (index 3)
+                row_owner = row[3].strip().lower() if len(row) > 3 and row[3].strip() else None
                 
                 if owner_email:
-                    # Admin Context: Show my sheets + legacy public sheets
-                    if row_owner and row_owner != owner_email.lower():
-                        continue 
-                # Student Context (owner_email=None): Show all sheets (assuming public access intent)
+                    # STRICT ADMIN FILTERING: Only show sources that explicitly belong to this admin
+                    # Legacy sources (no owner) are NOT shown to admins
+                    if not row_owner or row_owner != owner_email.lower():
+                        print(f" Skipping {row[2] if len(row) > 2 else 'Unknown'}: Owner={row_owner}, Looking for={owner_email.lower()}")
+                        continue
+                else:
+                    # Student Context (owner_email=None): Show all sheets for public search
+                    pass
                 
                 sid = row[0].strip()
                 rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
                 name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
                 sources.append((sid, rng, name))
-                print(f" Source {idx}: {name} ({sid[:20]}...) Owner={row_owner}")
+                print(f" ✓ Source {idx}: {name} ({sid[:20]}...) Owner={row_owner}")
 
-        print(f"✓ Loaded {len(sources)} sources")
+        print(f"✓ Loaded {len(sources)} sources for {owner_email or 'public'}")
         return sources
+    except Exception as e:
+        print(f"❌ Error reading Sources tab: {e}")
     except Exception as e:
         print(f"❌ Error reading Sources tab: {e}")
         import traceback

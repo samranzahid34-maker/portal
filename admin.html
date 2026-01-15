@@ -10,16 +10,37 @@
     <style>
         .admin-layout {
             display: grid;
-            grid-template-columns: 250px 1fr;
+            grid-template-columns: 0px 1fr;
             min-height: calc(100vh - 70px);
+            transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .admin-layout.sidebar-visible {
+            grid-template-columns: 250px 1fr;
         }
 
         .sidebar {
             background: #111827;
-            padding: 2rem;
             border-right: 1px solid #374151;
             color: white;
             height: 100%;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .sidebar-inner {
+            width: 250px;
+            padding: 2rem;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
         }
 
         .sidebar-link {
@@ -73,9 +94,15 @@
             }
 
             .sidebar {
+                display: none;
                 border-right: none;
                 border-bottom: 1px solid #374151;
-                padding: 1rem;
+                width: 100%;
+                height: auto;
+            }
+
+            .admin-layout.sidebar-visible .sidebar {
+                display: block;
             }
 
             .main-content {
@@ -92,7 +119,16 @@
 
 <body>
     <nav class="navbar">
-        <div class="logo">Admin</div>
+        <div style="display:flex; align-items:center">
+            <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
         <div class="nav-links">
             <button id="logout-btn" onclick="logout()"
                 style="display:none; background:none; border:none; color:inherit; cursor:pointer;">Logout</button>
@@ -101,13 +137,15 @@
 
     <div class="admin-layout" id="admin-panel" style="display:none">
         <aside class="sidebar">
-            <a href="#" class="sidebar-link active" onclick="switchTab('dashboard', this)">Dashboard</a>
-            <a href="#" class="sidebar-link" onclick="switchTab('sources', this)">Sheets Source</a>
-            <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
-            <a href="#" class="sidebar-link" onclick="switchTab('statistics', this)">Stat & Grades</a>
-            <button onclick="refreshData()" class="btn-primary"
-                style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem; background: #000000; border: 1px solid #333;">↻
-                Refresh Data</button>
+            <div class="sidebar-inner">
+                <a href="#" class="sidebar-link active" onclick="switchTab('dashboard', this)">Dashboard</a>
+                <a href="#" class="sidebar-link" onclick="switchTab('sources', this)">Sheets Source</a>
+                <a href="#" class="sidebar-link" onclick="switchTab('results', this)">Check Results</a>
+                <a href="#" class="sidebar-link" onclick="switchTab('statistics', this)">Stat & Grades</a>
+                <button onclick="refreshData()" class="btn-primary"
+                    style="margin:1rem; width:calc(100% - 2rem); font-size:0.9rem; background: #000000; border: 1px solid #333;">↻
+                    Refresh Data</button>
+            </div>
             <!-- <a href="#" class="sidebar-link">Settings</a> -->
         </aside>
 
@@ -657,6 +695,11 @@
         function logout() {
             localStorage.removeItem('adminToken');
             location.reload();
+        }
+
+        function toggleSidebar() {
+            const panel = document.getElementById('admin-panel');
+            panel.classList.toggle('sidebar-visible');
         }
 
         async function loadSources() {

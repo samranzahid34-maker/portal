@@ -397,7 +397,8 @@ def get_sheet_sources(owner_email=None):
                             continue
                     else:
                         # Legacy source (no owner) - show only to first admin
-                        if owner_email.lower() != first_admin_email:
+                        # FIX: Only filter if we know who the first admin is. If unknown (None), show to all to prevent data loss.
+                        if first_admin_email and owner_email.lower() != first_admin_email:
                             print(f" Skipping legacy source {row[2] if len(row) > 2 else 'Unknown'}: No owner, Current={owner_email.lower()}, First={first_admin_email}")
                             continue
                         else:
@@ -620,13 +621,28 @@ async def test_endpoint():
     }
 
 @app.get("/api/marks/{roll_number:path}")
-async def get_marks(roll_number: str):
+async def get_marks(roll_number: str, authorization: Optional[str] = Header(None)):
     try:
         if not sheets_service:
              raise HTTPException(status_code=500, detail="Google Sheets service not initialized")
 
-        # Get admin-configured sources only
-        sources = get_sheet_sources()
+        # Determine if Admin is searching (Filter sources)
+        owner_email = None
+        if authorization:
+            try:
+                scheme, _, param = authorization.partition(" ")
+                if scheme.lower() == 'bearer':
+                    # Avoid decoding 'null' string
+                    if param and param != 'null':
+                        payload = jwt.decode(param, SECRET_KEY, algorithms=[ALGORITHM])
+                        if "id" in payload: 
+                            owner_email = payload.get("email")
+                            print(f"Admin Search: Filtering sources for {owner_email}")
+            except Exception as e:
+                print(f"Token parsing failed in search: {e}")
+                
+        # Get sources (Filtered if admin, All if student/public)
+        sources = get_sheet_sources(owner_email)
         sheet_errors = []
 
         # Search each sheet directly

@@ -917,8 +917,11 @@
             const display = document.getElementById('result-display');
             display.innerHTML = '<p>Searching...</p>';
 
+            const token = localStorage.getItem('adminToken');
             try {
-                const res = await fetch(`/api/marks/${encodeURIComponent(roll)}`);
+                const res = await fetch(`/api/marks/${encodeURIComponent(roll)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const data = await res.json();
 
                 if (data.success) {

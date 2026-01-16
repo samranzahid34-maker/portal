@@ -376,7 +376,21 @@ def get_sheet_sources(owner_email=None):
                 if sheet_admins:
                     # First admin is the one who registered first (first row in sheet)
                     first_admin_email = sheet_admins[0]['email'].lower()
-                    print(f"First admin (for legacy sources): {first_admin_email}")
+                    print(f"First admin (Sheet): {first_admin_email}")
+                else:
+                    # Fallback: Check SQLite if Sheet Users are empty (Legacy Admin might be in DB only)
+                    try:
+                        conn = get_db()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT email FROM admins ORDER BY id ASC LIMIT 1")
+                        row = cursor.fetchone()
+                        conn.close()
+                        if row:
+                            first_admin_email = row[0].lower()
+                            print(f"First admin (SQLite): {first_admin_email}")
+                    except Exception as sqle:
+                        print(f"SQLite fallback failed: {sqle}")
+
             except Exception as e:
                 print(f"Could not determine first admin: {e}")
 
@@ -397,8 +411,7 @@ def get_sheet_sources(owner_email=None):
                             continue
                     else:
                         # Legacy source (no owner) - show only to first admin
-                        # FIX: Only filter if we know who the first admin is. If unknown (None), show to all to prevent data loss.
-                        if first_admin_email and owner_email.lower() != first_admin_email:
+                        if owner_email.lower() != first_admin_email:
                             print(f" Skipping legacy source {row[2] if len(row) > 2 else 'Unknown'}: No owner, Current={owner_email.lower()}, First={first_admin_email}")
                             continue
                         else:

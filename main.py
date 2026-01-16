@@ -758,7 +758,7 @@ async def get_marks(roll_number: str):
 async def get_student_subjects(roll_number: str):
     """
     Get all subjects (sheets) where a student has marks.
-    Each subject represents a different class taught by a different teacher.
+    Also calculates Class Average and Student Rank.
     """
     try:
         if not sheets_service:
@@ -815,7 +815,7 @@ async def get_student_subjects(roll_number: str):
                 
                 # Calculate class stats and find student
                 sheet_totals = []
-                student_found = False
+                student_data = None
                 
                 for row in rows:
                     if row and len(row) >= 2:
@@ -837,7 +837,6 @@ async def get_student_subjects(roll_number: str):
                         # Check if this is our student
                         row_roll = row[0].strip()
                         if row_roll.lower() == roll_number.lower():
-                            student_found = True
                             student_name = row[1].strip()
                             
                             # Build marks array
@@ -848,21 +847,40 @@ async def get_student_subjects(roll_number: str):
                                     value = mark if mark else '-'
                                     marks_array.append({"label": label, "value": value})
                             
-                            # Calculate class average
-                            class_avg = sum(sheet_totals) / len(sheet_totals) if sheet_totals else 0
-                            
-                            # Add this subject to the list
-                            student_subjects.append({
+                            student_data = {
                                 "rollNumber": row_roll,
                                 "name": student_name,
                                 "sheetName": name,
                                 "sheetId": sheet_id,
                                 "marks": marks_array,
-                                "total": current_row_total,
-                                "classAverage": round(class_avg, 2)
-                            })
-                            break  # Found student in this sheet, move to next sheet
+                                "total": current_row_total
+                            }
+                            # DO NOT BREAK here. We need to process all rows for class stats.
                 
+                # If student found in this sheet, calculate stats and add to list
+                if student_data:
+                    # Calculate Stats
+                    class_avg = sum(sheet_totals) / len(sheet_totals) if sheet_totals else 0
+                    
+                    # Calculate Rank
+                    # Sort totals descending
+                    sorted_totals = sorted(sheet_totals, reverse=True)
+                    # Find index of student's total (+1 for 1-based rank)
+                    # Note: index() finds first occurrence, so ties get same rank (e.g. 1, 2, 2, 4)
+                    try:
+                        student_rank = sorted_totals.index(student_data['total']) + 1
+                    except ValueError:
+                        student_rank = 0 # Should not happen
+                        
+                    total_students = len(sheet_totals)
+
+                    student_subjects.append({
+                        **student_data,
+                        "classAverage": round(class_avg, 2),
+                        "rank": student_rank,
+                        "totalStudents": total_students
+                    })
+
             except Exception as e:
                 print(f"Error reading sheet {name}: {e}")
                 err_str = str(e)

@@ -319,3 +319,16 @@ F:  2 students (6.7%)   ████
 - ✅ **Seamless Integration**: The system prioritizes manual overrides when the "Manual" grading method is active, falling back to calculated grades if no override exists.
 
 **Result**: Admins can now fully control grades by manually editing them directly in the results table.
+
+---
+
+### 6. 🚀 **Student Rank System** → ✅ **ADDED**
+
+**Problem**: Students could see their marks but not their standing relative to the class.
+
+**Solution**:
+- ✅ **Backend Logic**: Updated `get_student_subjects` in `main.py` to calculate the student's rank based on total marks for each subject.
+- ✅ **Fix for Averages**: Fixed a bug where Class Average was calculated using incomplete data. Now iterates all student records before calculating stats.
+- ✅ **Frontend Display**: Added a "Class Position" card to the student dashboard alongside "Class Average", showing `Rank / Total Students` (e.g., `#5 / 42`).
+
+**Result**: Students now have better insight into their performance relative to peers.

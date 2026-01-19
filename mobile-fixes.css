@@ -167,6 +167,7 @@
         border-spacing: 0 !important;
         border-radius: 1rem !important;
         overflow: hidden !important;
+        table-layout: fixed !important;
     }
 
     /* Show headers on mobile with dark background */
@@ -178,18 +179,21 @@
     #marks-section .marks-table thead tr,
     #marks-section .responsive-table thead tr {
         background: #475569 !important;
+        display: table-row !important;
     }
 
     #marks-section .marks-table thead th,
     #marks-section .responsive-table thead th {
-        padding: 1rem !important;
+        display: table-cell !important;
+        padding: 1rem 0.5rem !important;
         text-align: center !important;
         font-weight: 700 !important;
         color: white !important;
         text-transform: uppercase !important;
-        font-size: 0.85rem !important;
+        font-size: 0.75rem !important;
         letter-spacing: 0.05em !important;
         border: none !important;
+        vertical-align: middle !important;
     }
 
     #marks-section .marks-table tbody,
@@ -203,14 +207,21 @@
         border-bottom: 1px solid #e5e7eb !important;
     }
 
+    /* All table cells must display as table-cell */
+    #marks-section .marks-table td,
+    #marks-section .responsive-table td {
+        display: table-cell !important;
+        vertical-align: middle !important;
+        text-align: center !important;
+        padding: 1rem 0.5rem !important;
+    }
+
     /* Assessment cells - purple gradient background */
     #marks-section .marks-table td:first-child,
     #marks-section .responsive-table td:first-child {
         background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
         color: white !important;
         font-weight: 600 !important;
-        text-align: center !important;
-        padding: 1rem !important;
         width: 60% !important;
     }
 
@@ -221,8 +232,6 @@
         color: #1e293b !important;
         font-weight: 700 !important;
         font-size: 1.1rem !important;
-        text-align: center !important;
-        padding: 1rem !important;
         width: 40% !important;
     }
 
@@ -245,6 +254,12 @@
     #marks-section .responsive-table td::before {
         content: none !important;
         display: none !important;
+    }
+
+    /* Wrapper must not interfere */
+    .marks-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     /* Results layout - stack on mobile */

@@ -744,6 +744,45 @@ h2 {
         -webkit-overflow-scrolling: touch;
         /* Smooth scroll on iOS */
     }
+
+    /* Tabs Responsive */
+    .tabs {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tab-btn {
+        flex-basis: 45%;
+        /* 2 per row approx */
+        text-align: center;
+    }
+
+    /* Global Responsive Images */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Table & Text Safety */
+    table {
+        width: 100%;
+    }
+
+    td,
+    th,
+    div,
+    p,
+    span,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        /* modern standard */
+    }
 }
 
 /* Global Touch Improvements */

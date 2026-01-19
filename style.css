@@ -632,6 +632,7 @@ h2 {
 
     /* Touch Targets */
     .btn-primary,
+    .btn-secondary,
     select,
     input {
         min-height: 48px;
@@ -707,8 +708,57 @@ h2 {
     }
 
     /* Privacy & Terms Mobile */
+    /* Privacy & Terms Mobile */
     .card h1 {
         font-size: 1.8rem;
         line-height: 1.2;
+    }
+
+    /* Touch Device Specifics */
+    input,
+    select,
+    textarea {
+        font-size: 16px !important;
+        /* Prevent iOS zoom */
+    }
+
+    /* Fix Split Layout Height on Mobile browsers with toolbars */
+    .split-layout {
+        min-height: 100vh;
+        /* Fallback */
+        min-height: 100dvh;
+    }
+
+    .sidebar {
+        height: 100vh;
+        /* Fallback */
+        height: 100dvh;
+    }
+
+    /* Better scrolling for sidebar */
+    #subjects-sidebar {
+        height: 100vh;
+        /* Fallback */
+        height: 100dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        /* Smooth scroll on iOS */
+    }
+}
+
+/* Global Touch Improvements */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+
+    /* Only apply hover effects on devices that support hover */
+    .btn-primary:hover {
+        background: var(--primary-dark);
+    }
+
+    .subject-btn:hover {
+        background: rgba(96, 165, 250, 0.1);
     }
 }

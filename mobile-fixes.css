@@ -79,34 +79,43 @@
         stroke: currentColor !important;
     }
 
-    /* Position navbar items correctly on mobile */
+    /* Admin dashboard header adjustments */
     .navbar {
-        justify-content: flex-start !important;
-        gap: 1rem !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0.75rem 1rem !important;
+        gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
     }
 
-    .navbar>div:first-child {
-        margin-right: auto !important;
-        order: -1 !important;
+    .navbar>div {
+        display: flex !important;
+        align-items: center !important;
     }
 
-    /* Logout button visibility and styling */
+    /* Logout button visibility and styling (Admin) */
     #logout-btn,
-    .navbar #logout-btn {
+    .navbar #logout-btn,
+    .nav-links #logout-btn {
         display: inline-block !important;
-        padding: 0.5rem 1rem !important;
-        background: #ef4444 !important;
-        color: white !important;
-        border: none !important;
+        visibility: visible !important;
+        padding: 0.4rem 0.8rem !important;
+        background: transparent !important;
+        color: #1e293b !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 0.5rem !important;
         cursor: pointer !important;
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important;
         font-weight: 500 !important;
-        min-height: 40px !important;
+        min-height: auto !important;
+        height: auto !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
     }
 
     #logout-btn:hover {
-        background: #dc2626 !important;
+        background: #f8fafc !important;
     }
 
     /* ========================================

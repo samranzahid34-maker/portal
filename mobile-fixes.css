@@ -157,6 +157,81 @@
         border: none !important;
     }
 
+    /* Student marks table - enforce two-column layout */
+    #marks-section .marks-table,
+    #marks-section .responsive-table,
+    .marks-table-wrapper table {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    #marks-section .marks-table thead,
+    #marks-section .responsive-table thead {
+        display: none !important;
+    }
+
+    #marks-section .marks-table tbody,
+    #marks-section .responsive-table tbody {
+        display: block !important;
+    }
+
+    #marks-section .marks-table tbody tr,
+    #marks-section .responsive-table tbody tr {
+        display: block !important;
+        margin-bottom: 0 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    #marks-section .marks-table td,
+    #marks-section .responsive-table td {
+        display: grid !important;
+        grid-template-columns: 50% 50% !important;
+        gap: 0 !important;
+        padding: 0.75rem !important;
+        border: none !important;
+        text-align: center !important;
+    }
+
+    #marks-section .marks-table td::before,
+    #marks-section .responsive-table td::before {
+        content: attr(data-label) !important;
+        grid-column: 1 !important;
+        font-weight: 700 !important;
+        background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
+        color: white !important;
+        padding: 0.75rem !important;
+        text-align: center !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Results layout - stack on mobile */
+    .results-layout,
+    div[style*="display: flex"][style*="gap: 2rem"] {
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+    }
+
+    /* Stat boxes - full width on mobile */
+    .results-layout>div,
+    div[style*="flex: 0 0 280px"] {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Class average and rank cards */
+    div[style*="Class Average"],
+    div[style*="Your Rank"] {
+        padding: 1.5rem 1rem !important;
+    }
+
+    div[style*="Class Average"] div[style*="font-size: 3rem"],
+    div[style*="Your Rank"] div[style*="font-size: 3rem"] {
+        font-size: 2.5rem !important;
+    }
+
     /* ========================================
        TABLE FIXES - Grid-Based Layout
        ======================================== */

@@ -36,8 +36,53 @@
         overflow-x: hidden !important;
     }
 
+    /* ========================================
+       SIDEBAR & NAVIGATION FIXES
+       ======================================== */
 
-    /* Target all responsive tables including stats-table */
+    /* Fix oversized close button in sidebar */
+    .sidebar .mobile-only button,
+    .sidebar-inner .mobile-only button {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .sidebar .mobile-only button svg,
+    .sidebar-inner .mobile-only button svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* Ensure hamburger menu is visible */
+    .hamburger-btn,
+    button.hamburger-btn,
+    .navbar .hamburger-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 44px !important;
+        height: 44px !important;
+        padding: 0.5rem !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        color: inherit !important;
+    }
+
+    .hamburger-btn svg {
+        width: 24px !important;
+        height: 24px !important;
+        stroke: currentColor !important;
+    }
+
+    /* ========================================
+       TABLE FIXES - Grid-Based Layout
+       ======================================== */
+
     .responsive-table td,
     #stats-table td,
     table.responsive-table td,

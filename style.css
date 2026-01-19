@@ -671,14 +671,16 @@ h2 {
     }
 
     .responsive-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 0.75rem 1rem !important;
+        display: block !important;
+        width: 100% !important;
+        text-align: right !important;
+        /* Force value to right */
+        padding: 0.8rem 1rem !important;
         border-bottom: 1px solid #f1f5f9;
         font-size: 0.95rem;
-        min-height: 50px;
+        min-height: 40px;
+        /* Ensure height */
+        box-sizing: border-box;
     }
 
     .responsive-table td:last-child {
@@ -687,17 +689,22 @@ h2 {
 
     .responsive-table td::before {
         content: attr(data-label);
-        font-weight: 600;
+        float: left;
+        /* Force label to left */
+        font-weight: 700;
         text-align: left;
         color: #475569;
         text-transform: uppercase;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         letter-spacing: 0.05em;
         padding-right: 1rem;
-        /* Flex fix: prevents label from growing and squeezing value */
-        flex-shrink: 0;
-        flex-grow: 0;
-        max-width: 60%;
+    }
+
+    /* Clearfix for float */
+    .responsive-table td::after {
+        content: "";
+        display: table;
+        clear: both;
     }
 
     /* Chart Containers */

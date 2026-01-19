@@ -110,6 +110,54 @@
     }
 
     /* ========================================
+       STUDENT DASHBOARD FIXES
+       ======================================== */
+
+    /* Student dashboard header */
+    #marks-section #main-content>div:first-child,
+    #main-content>div[style*="justify-content: space-between"] {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 1rem !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Student hamburger menu - left aligned */
+    #marks-section button[onclick="toggleSidebar()"],
+    #main-content button[onclick="toggleSidebar()"] {
+        order: -1 !important;
+        margin-right: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Student portal title - center on mobile */
+    #marks-section h1,
+    #main-content h1[style*="position: absolute"] {
+        position: static !important;
+        transform: none !important;
+        font-size: 1rem !important;
+        flex: 1 !important;
+        text-align: center !important;
+        margin: 0 0.5rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Student logout button - right aligned */
+    #marks-section .btn-logout,
+    #main-content .btn-logout {
+        order: 1 !important;
+        flex-shrink: 0 !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        background: #ef4444 !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* ========================================
        TABLE FIXES - Grid-Based Layout
        ======================================== */
 

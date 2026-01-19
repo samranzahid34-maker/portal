@@ -1,5 +1,3 @@
-/* Mobile Responsiveness Fixes - Comprehensive */
-
 /* Apply these fixes within the existing @media (max-width: 768px) block */
 
 /* ========================================
@@ -8,7 +6,12 @@
 
 /* Override existing .responsive-table td styles */
 @media (max-width: 768px) {
-    .responsive-table td {
+
+    /* Target all responsive tables including stats-table */
+    .responsive-table td,
+    #stats-table td,
+    table.responsive-table td,
+    table[class*="responsive"] td {
         display: grid !important;
         grid-template-columns: 40% 60% !important;
         gap: 0.5rem !important;
@@ -21,7 +24,10 @@
         text-align: left !important;
     }
 
-    .responsive-table td::before {
+    .responsive-table td::before,
+    #stats-table td::before,
+    table.responsive-table td::before,
+    table[class*="responsive"] td::before {
         content: attr(data-label) !important;
         font-weight: 700 !important;
         color: #475569 !important;
@@ -35,8 +41,37 @@
         padding-right: 0 !important;
     }
 
+    /* Hide table headers on mobile */
+    .responsive-table thead,
+    #stats-table thead,
+    table.responsive-table thead {
+        display: none !important;
+    }
+
+    /* Make tbody display as block */
+    .responsive-table tbody,
+    #stats-table tbody,
+    table.responsive-table tbody {
+        display: block !important;
+    }
+
+    /* Make each row a card */
+    .responsive-table tbody tr,
+    #stats-table tbody tr,
+    table.responsive-table tbody tr {
+        display: block !important;
+        margin-bottom: 1.25rem !important;
+        background: white !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.75rem !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+        overflow: hidden !important;
+        padding: 0.5rem !important;
+    }
+
     /* Remove any clearfix that might interfere */
-    .responsive-table td::after {
+    .responsive-table td::after,
+    #stats-table td::after {
         content: none !important;
         display: none !important;
     }

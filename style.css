@@ -617,11 +617,8 @@ h2 {
     }
 
     /* Cards & Tables */
-    .marks-table td,
-    .marks-table th {
-        padding: 0.8rem 0.5rem !important;
-        font-size: 0.85rem !important;
-    }
+    /* Cards & Tables */
+    /* REMOVED: .marks-table td override which conflicts with responsive-table padding */
 
     /* Typography */
     h2 {
@@ -694,8 +691,24 @@ h2 {
         text-transform: uppercase;
         font-size: 0.75rem;
         letter-spacing: 0.05em;
-        padding-right: 1rem;
-        flex: 1;
         /* Allow label to take space */
+    }
+
+    /* Chart Containers */
+    #performance-chart,
+    #bell-curve-container {
+        min-height: 250px;
+        max-height: 300px;
+    }
+
+    #bell-curve-container svg {
+        height: auto !important;
+        min-height: 200px;
+    }
+
+    /* Privacy & Terms Mobile */
+    .card h1 {
+        font-size: 1.8rem;
+        line-height: 1.2;
     }
 }

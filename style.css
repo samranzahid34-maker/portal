@@ -671,15 +671,14 @@ h2 {
     }
 
     .responsive-table td {
-        display: block !important;
-        width: 100% !important;
-        text-align: right !important;
-        /* Force value to right */
-        padding: 0.8rem 1rem !important;
+        display: grid !important;
+        grid-template-columns: 40% 60%;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.75rem 1rem !important;
         border-bottom: 1px solid #f1f5f9;
         font-size: 0.95rem;
-        min-height: 40px;
-        /* Ensure height */
+        min-height: 44px;
         box-sizing: border-box;
     }
 

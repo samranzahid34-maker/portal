@@ -170,6 +170,9 @@
 
     <!-- Student Dashboard with Sidebar (Hidden by default) -->
     <div id="marks-section" class="hidden" style="display: none; min-height: 100vh; background: #f8fafc;">
+        <!-- Mobile Overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebarMobile()"></div>
+
         <!-- Left Sidebar -->
         <aside id="subjects-sidebar"
             style="width: 280px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem 0; position: fixed; height: 100vh; overflow-y: auto; box-shadow: 4px 0 12px rgba(0,0,0,0.1); transition: transform 0.3s ease; left: 0; z-index: 50;">
@@ -220,7 +223,7 @@
                     style="padding: 0.5rem 1rem; background: transparent; color: #1e293b; border: 1px solid transparent; border-radius: 0.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.95rem;">Logout</button>
             </div>
 
-            <div style="padding: 0 3rem;">
+            <div style="padding: 0 1rem; max-width: 1200px; margin: 0 auto;">
 
 
                 <!-- Content Container -->
@@ -248,22 +251,44 @@
 
     <script>
         const API_URL = '/api';
-        let isSidebarOpen = true;
+        let isSidebarOpen = window.innerWidth > 768; // Default open on desktop, closed on mobile
 
         function toggleSidebar() {
             const sidebar = document.getElementById('subjects-sidebar');
             const mainContent = document.getElementById('main-content');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isMobile = window.innerWidth <= 768;
 
             isSidebarOpen = !isSidebarOpen;
 
-            if (isSidebarOpen) {
-                sidebar.style.transform = 'translateX(0)';
-                mainContent.style.marginLeft = '280px';
+            if (isMobile) {
+                if (isSidebarOpen) {
+                    sidebar.classList.add('mobile-open');
+                    overlay.classList.add('active');
+                } else {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                }
             } else {
-                sidebar.style.transform = 'translateX(-100%)';
-                mainContent.style.marginLeft = '0';
+                // Desktop Push Logic
+                if (isSidebarOpen) {
+                    sidebar.style.transform = 'translateX(0)';
+                    mainContent.style.marginLeft = '280px';
+                } else {
+                    sidebar.style.transform = 'translateX(-100%)';
+                    mainContent.style.marginLeft = '0';
+                }
             }
         }
+
+        function closeSidebarMobile() {
+            if (window.innerWidth <= 768) {
+                isSidebarOpen = false;
+                document.getElementById('subjects-sidebar').classList.remove('mobile-open');
+                document.getElementById('sidebar-overlay').classList.remove('active');
+            }
+        }
+
 
         function toggleForms(type) {
             const loginWrap = document.getElementById('login-form-wrapper');
@@ -429,6 +454,10 @@
                 btn.style.background = 'transparent';
                 btn.style.borderLeft = '3px solid transparent';
             });
+
+            // Auto close on mobile
+            closeSidebarMobile();
+
 
             if (activeBtn) {
                 activeBtn.style.background = 'rgba(96, 165, 250, 0.1)';

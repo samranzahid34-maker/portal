@@ -79,6 +79,17 @@
         stroke: currentColor !important;
     }
 
+    /* Position navbar items correctly on mobile */
+    .navbar {
+        justify-content: flex-start !important;
+        gap: 1rem !important;
+    }
+
+    .navbar>div:first-child {
+        margin-right: auto !important;
+        order: -1 !important;
+    }
+
     /* ========================================
        TABLE FIXES - Grid-Based Layout
        ======================================== */

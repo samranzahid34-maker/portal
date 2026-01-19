@@ -677,7 +677,8 @@ h2 {
         text-align: right;
         padding: 0.75rem 1rem !important;
         border-bottom: 1px solid #f1f5f9;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        min-height: 50px;
     }
 
     .responsive-table td:last-child {
@@ -688,11 +689,15 @@ h2 {
         content: attr(data-label);
         font-weight: 600;
         text-align: left;
-        color: #64748b;
+        color: #475569;
         text-transform: uppercase;
         font-size: 0.75rem;
         letter-spacing: 0.05em;
-        /* Allow label to take space */
+        padding-right: 1rem;
+        /* Flex fix: prevents label from growing and squeezing value */
+        flex-shrink: 0;
+        flex-grow: 0;
+        max-width: 60%;
     }
 
     /* Chart Containers */

@@ -688,34 +688,33 @@ h2 {
 
     .responsive-table td::before {
         content: attr(data-label);
-        float: left;
-        /* Force label to left */
         font-weight: 700;
         text-align: left;
         color: #475569;
         text-transform: uppercase;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         letter-spacing: 0.05em;
-        padding-right: 1rem;
+        word-wrap: break-word;
     }
 
-    /* Clearfix for float */
-    .responsive-table td::after {
-        content: "";
-        display: table;
-        clear: both;
-    }
+
 
     /* Chart Containers */
     #performance-chart,
     #bell-curve-container {
+        width: 100% !important;
+        max-width: 100% !important;
         min-height: 250px;
-        max-height: 300px;
+        max-height: 350px;
+        overflow: visible !important;
     }
 
+    #performance-chart canvas,
     #bell-curve-container svg {
+        width: 100% !important;
         height: auto !important;
         min-height: 200px;
+        max-width: 100% !important;
     }
 
     /* Privacy & Terms Mobile */

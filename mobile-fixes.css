@@ -157,53 +157,94 @@
         border: none !important;
     }
 
-    /* Student marks table - enforce two-column layout */
+    /* Student marks table - styled like the image */
     #marks-section .marks-table,
     #marks-section .responsive-table,
     .marks-table-wrapper table {
-        display: block !important;
+        display: table !important;
         width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border-radius: 1rem !important;
+        overflow: hidden !important;
     }
 
+    /* Show headers on mobile with dark background */
     #marks-section .marks-table thead,
     #marks-section .responsive-table thead {
-        display: none !important;
+        display: table-header-group !important;
+    }
+
+    #marks-section .marks-table thead tr,
+    #marks-section .responsive-table thead tr {
+        background: #475569 !important;
+    }
+
+    #marks-section .marks-table thead th,
+    #marks-section .responsive-table thead th {
+        padding: 1rem !important;
+        text-align: center !important;
+        font-weight: 700 !important;
+        color: white !important;
+        text-transform: uppercase !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 0.05em !important;
+        border: none !important;
     }
 
     #marks-section .marks-table tbody,
     #marks-section .responsive-table tbody {
-        display: block !important;
+        display: table-row-group !important;
     }
 
     #marks-section .marks-table tbody tr,
     #marks-section .responsive-table tbody tr {
-        display: block !important;
-        margin-bottom: 0 !important;
-        border-bottom: 1px solid #e2e8f0 !important;
+        display: table-row !important;
+        border-bottom: 1px solid #e5e7eb !important;
     }
 
-    #marks-section .marks-table td,
-    #marks-section .responsive-table td {
-        display: grid !important;
-        grid-template-columns: 50% 50% !important;
-        gap: 0 !important;
-        padding: 0.75rem !important;
-        border: none !important;
-        text-align: center !important;
-    }
-
-    #marks-section .marks-table td::before,
-    #marks-section .responsive-table td::before {
-        content: attr(data-label) !important;
-        grid-column: 1 !important;
-        font-weight: 700 !important;
+    /* Assessment cells - purple gradient background */
+    #marks-section .marks-table td:first-child,
+    #marks-section .responsive-table td:first-child {
         background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%) !important;
         color: white !important;
-        padding: 0.75rem !important;
+        font-weight: 600 !important;
         text-align: center !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        padding: 1rem !important;
+        width: 60% !important;
+    }
+
+    /* Marks cells - white background */
+    #marks-section .marks-table td:last-child,
+    #marks-section .responsive-table td:last-child {
+        background: white !important;
+        color: #1e293b !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        text-align: center !important;
+        padding: 1rem !important;
+        width: 40% !important;
+    }
+
+    /* Total row styling */
+    #marks-section .marks-table tbody tr:last-child td:first-child,
+    #marks-section .responsive-table tbody tr:last-child td:first-child {
+        background: white !important;
+        color: #1e293b !important;
+        font-weight: 700 !important;
+    }
+
+    #marks-section .marks-table tbody tr:last-child td:last-child,
+    #marks-section .responsive-table tbody tr:last-child td:last-child {
+        color: #6366f1 !important;
+        font-size: 1.3rem !important;
+    }
+
+    /* Remove ::before pseudo-elements for this style */
+    #marks-section .marks-table td::before,
+    #marks-section .responsive-table td::before {
+        content: none !important;
+        display: none !important;
     }
 
     /* Results layout - stack on mobile */

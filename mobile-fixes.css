@@ -165,9 +165,17 @@
         flex-shrink: 0 !important;
         padding: 0.5rem 0.75rem !important;
         font-size: 0.85rem !important;
-        background: #ef4444 !important;
-        color: white !important;
-        border: none !important;
+        background: transparent !important;
+        color: #1e293b !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.5rem !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    #marks-section .btn-logout:hover,
+    #main-content .btn-logout:hover {
+        background: #f8fafc !important;
     }
 
     /* Student marks table - styled like the image */

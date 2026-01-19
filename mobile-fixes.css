@@ -90,6 +90,25 @@
         order: -1 !important;
     }
 
+    /* Logout button visibility and styling */
+    #logout-btn,
+    .navbar #logout-btn {
+        display: inline-block !important;
+        padding: 0.5rem 1rem !important;
+        background: #ef4444 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 0.5rem !important;
+        cursor: pointer !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        min-height: 40px !important;
+    }
+
+    #logout-btn:hover {
+        background: #dc2626 !important;
+    }
+
     /* ========================================
        TABLE FIXES - Grid-Based Layout
        ======================================== */

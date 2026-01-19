@@ -152,7 +152,10 @@
     /* Student portal title - responsive center */
     #marks-section h1,
     #main-content h1[style*="position: absolute"],
-    #main-content h1 {
+    #main-content h1,
+    #main-content>div:first-child h1 {
+        display: block !important;
+        visibility: visible !important;
         position: static !important;
         transform: none !important;
         font-size: clamp(0.85rem, 4vw, 1rem) !important;
@@ -164,6 +167,9 @@
         text-overflow: ellipsis !important;
         order: 0 !important;
         max-width: calc(100% - 180px) !important;
+        opacity: 1 !important;
+        color: #6366f1 !important;
+        font-weight: 700 !important;
     }
 
     /* Student logout button - right aligned */

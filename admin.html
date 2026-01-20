@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="mobile-fixes.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
     <style>
         /* Base Layout */
         .admin-layout {
@@ -269,8 +270,14 @@
 
                 <!-- Performance Graph -->
                 <div class="card" style="margin-bottom: 2rem; padding: 1.5rem; width: 100%; max-width: 100%;">
-                    <h3 style="margin-bottom: 1rem; color: var(--text); font-weight: 600;">Overall Section Performance
-                    </h3>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0; color: var(--text); font-weight: 600;">Overall Section Performance</h3>
+                        <button onclick="performanceChartInstance.resetZoom()" class="btn-secondary"
+                            style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Reset Zoom</button>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: -0.5rem; margin-bottom: 1rem;">Scroll to
+                        zoom, click and drag to pan.</p>
                     <div style="height: 500px; width: 100%;">
                         <canvas id="performance-chart"></canvas>
                     </div>
@@ -1110,6 +1117,21 @@
                             callbacks: {
                                 title: (context) => `Student #${context[0].label}`,
                                 label: (context) => `${context.dataset.label}: ${context.raw} Marks`
+                            }
+                        },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'xy',
+                            },
+                            zoom: {
+                                wheel: {
+                                    enabled: true,
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy',
                             }
                         }
                     },

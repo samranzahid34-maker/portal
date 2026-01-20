@@ -421,6 +421,9 @@ def get_sheet_sources(owner_email=None):
                     pass
                 
                 sid = row[0].strip()
+                if not sid:
+                    continue # Skip empty rows
+                
                 rng = row[1].strip() if len(row) > 1 else "Sheet1!A2:Z"
                 name = row[2].strip() if len(row) > 2 else sid[:15] + "..."
                 sources.append((sid, rng, name))
@@ -448,11 +451,6 @@ def append_source_to_sheet(target_sheet_id, target_range, sheet_name="", owner_e
             valueInputOption="RAW",
             body=body
         ).execute()
-        return True, "Success"
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Source Config Write Error: {error_msg}")
-        return False, f"Failed to write to Sources tab: {error_msg}"
         return True, "Success"
     except Exception as e:
         error_msg = str(e)
@@ -1062,10 +1060,10 @@ async def delete_source(data: DeleteSource):
         raise HTTPException(status_code=500, detail="Services not configured")
 
     try:
-        # Read all sources
+        # Read all sources (including Owner Email in Column D)
         result = sheets_service.spreadsheets().values().get(
             spreadsheetId=config_sheet_id,
-            range="Sources!A:C"
+            range="Sources!A:D"
         ).execute()
         rows = result.get('values', [])
         
@@ -1080,18 +1078,23 @@ async def delete_source(data: DeleteSource):
         for idx, row in enumerate(rows):
             if idx == 0: continue
             # Check sheet ID (Column A)
-            if len(row) > 0 and row[0].strip() == data.sheetId:
-                found = True
-                continue # Skip this row (delete)
-            new_rows.append(row)
+            if len(row) > 0:
+                row_sid = row[0].strip()
+                if not row_sid: continue # Filter out already empty rows
+                if row_sid == data.sheetId:
+                    found = True
+                    continue # Skip this row (delete)
+                new_rows.append(row)
             
         if not found:
-            raise HTTPException(status_code=404, detail="Source not found")
+            # If not found but we are cleaning up, we might not want to raise error?
+            # But the user expected to delete something.
+            pass 
 
-        # Clear the sheet first to remove old data
+        # Clear the sheet first to remove old data (Columns A to D)
         sheets_service.spreadsheets().values().clear(
             spreadsheetId=config_sheet_id,
-            range="Sources!A:C"
+            range="Sources!A:D"
         ).execute()
 
         # Write back the kept rows
@@ -1118,29 +1121,32 @@ async def update_source(data: UpdateSource):
         raise HTTPException(status_code=500, detail="Services not configured")
 
     try:
-        # Read all sources to find index
+        # Read all sources to find index and preserve existing owner email
         result = sheets_service.spreadsheets().values().get(
             spreadsheetId=config_sheet_id,
-            range="Sources!A:C"
+            range="Sources!A:D"
         ).execute()
         rows = result.get('values', [])
         
         row_index = -1
+        owner_email = ""
         # Skip header row (index 0), data starts at row 2 (index 1) in Python list, but sheet row is index+1
         for idx, row in enumerate(rows):
             if idx == 0: continue # Skip Header
             if len(row) > 0 and row[0].strip() == data.oldSheetId:
                 row_index = idx + 1 # 1-based index for API
+                # Preserve existing owner email from Column D (index 3)
+                owner_email = row[3] if len(row) > 3 else ""
                 break
         
         if row_index == -1:
             raise HTTPException(status_code=404, detail="Source sheet not found to update")
             
-        # Update specific row
-        body = {"values": [[data.sheetId, data.range, data.name]]}
+        # Update specific row including preserved owner email
+        body = {"values": [[data.sheetId, data.range, data.name, owner_email]]}
         sheets_service.spreadsheets().values().update(
             spreadsheetId=config_sheet_id,
-            range=f"Sources!A{row_index}:C{row_index}",
+            range=f"Sources!A{row_index}:D{row_index}",
             valueInputOption="RAW",
             body=body
         ).execute()

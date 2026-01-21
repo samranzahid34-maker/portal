@@ -530,6 +530,11 @@ async def health_check():
 
 
 
+@app.get("/google868b6519e7f03d83.html")
+async def google_verification():
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse("google-site-verification: google868b6519e7f03d83.html")
+
 @app.post("/api/register")
 async def register_student(student: StudentRegister):
     # Normalize inputs (Clean data before saving)

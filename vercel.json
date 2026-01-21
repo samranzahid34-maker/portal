@@ -4,25 +4,13 @@
         {
             "src": "main.py",
             "use": "@vercel/python"
-        },
-        {
-            "src": "*.html",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.css",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.js",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.{png,jpg,jpeg,svg,ico}",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
+        {
+            "src": "/google868b6519e7f03d83.html",
+            "dest": "/google868b6519e7f03d83.html"
+        },
         {
             "src": "/api/(.*)",
             "dest": "main.py"

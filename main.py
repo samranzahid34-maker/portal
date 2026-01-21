@@ -257,6 +257,73 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve static files (CSS, JS, images, fonts)
+import os
+from pathlib import Path
+
+# Get the directory where main.py is located
+BASE_DIR = Path(__file__).resolve().parent
+
+# Mount static files
+try:
+    app.mount("/assets", StaticFiles(directory=str(BASE_DIR / "assets")), name="assets")
+except Exception as e:
+    print(f"Warning: Could not mount assets directory: {e}")
+
+# Serve HTML pages
+@app.get("/")
+async def serve_index():
+    """Serve the main index.html page"""
+    return FileResponse(str(BASE_DIR / "index.html"))
+
+@app.get("/admin.html")
+async def serve_admin():
+    """Serve the admin.html page"""
+    return FileResponse(str(BASE_DIR / "admin.html"))
+
+@app.get("/privacy.html")
+async def serve_privacy():
+    """Serve the privacy.html page"""
+    return FileResponse(str(BASE_DIR / "privacy.html"))
+
+@app.get("/terms.html")
+async def serve_terms():
+    """Serve the terms.html page"""
+    return FileResponse(str(BASE_DIR / "terms.html"))
+
+# Serve CSS files
+@app.get("/style.css")
+async def serve_style_css():
+    """Serve style.css"""
+    return FileResponse(str(BASE_DIR / "style.css"), media_type="text/css")
+
+@app.get("/mobile-fixes.css")
+async def serve_mobile_css():
+    """Serve mobile-fixes.css"""
+    return FileResponse(str(BASE_DIR / "mobile-fixes.css"), media_type="text/css")
+
+@app.get("/styles-simple.css")
+async def serve_simple_css():
+    """Serve styles-simple.css"""
+    return FileResponse(str(BASE_DIR / "styles-simple.css"), media_type="text/css")
+
+# Serve JS files
+@app.get("/script.js")
+async def serve_script_js():
+    """Serve script.js"""
+    return FileResponse(str(BASE_DIR / "script.js"), media_type="application/javascript")
+
+# Serve image files
+@app.get("/student-side.png")
+async def serve_student_image():
+    """Serve student-side.png"""
+    return FileResponse(str(BASE_DIR / "student-side.png"), media_type="image/png")
+
+@app.get("/admin.png")
+async def serve_admin_image():
+    """Serve admin.png"""
+    return FileResponse(str(BASE_DIR / "admin.png"), media_type="image/png")
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

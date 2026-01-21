@@ -8,12 +8,32 @@
     ],
     "routes": [
         {
+            "src": "/",
+            "dest": "/index.html"
+        },
+        {
             "src": "/google868b6519e7f03d83.html",
             "dest": "/google868b6519e7f03d83.html"
         },
         {
             "src": "/api/(.*)",
             "dest": "main.py"
+        },
+        {
+            "src": "/admin.html",
+            "dest": "/admin.html"
+        },
+        {
+            "src": "/privacy.html",
+            "dest": "/privacy.html"
+        },
+        {
+            "src": "/terms.html",
+            "dest": "/terms.html"
+        },
+        {
+            "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+            "dest": "/$1"
         },
         {
             "src": "/(.*)",

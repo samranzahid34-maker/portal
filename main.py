@@ -7,6 +7,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from pathlib import Path
 import sqlite3
 import os
 import json
@@ -256,10 +257,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Serve static files (CSS, JS, images, fonts)
-import os
-from pathlib import Path
 
 # Get the directory where main.py is located
 BASE_DIR = Path(__file__).resolve().parent

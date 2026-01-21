@@ -7,7 +7,6 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pathlib import Path
 import sqlite3
 import os
 import json
@@ -258,68 +257,92 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Get the directory where main.py is located
-BASE_DIR = Path(__file__).resolve().parent
-
-# Mount static files
-try:
-    app.mount("/assets", StaticFiles(directory=str(BASE_DIR / "assets")), name="assets")
-except Exception as e:
-    print(f"Warning: Could not mount assets directory: {e}")
+# Get the directory where main.py is located (Vercel-compatible)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Serve HTML pages
 @app.get("/")
 async def serve_index():
     """Serve the main index.html page"""
-    return FileResponse(str(BASE_DIR / "index.html"))
+    file_path = os.path.join(BASE_DIR, "index.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="index.html not found")
 
 @app.get("/admin.html")
 async def serve_admin():
     """Serve the admin.html page"""
-    return FileResponse(str(BASE_DIR / "admin.html"))
+    file_path = os.path.join(BASE_DIR, "admin.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="admin.html not found")
 
 @app.get("/privacy.html")
 async def serve_privacy():
     """Serve the privacy.html page"""
-    return FileResponse(str(BASE_DIR / "privacy.html"))
+    file_path = os.path.join(BASE_DIR, "privacy.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="privacy.html not found")
 
 @app.get("/terms.html")
 async def serve_terms():
     """Serve the terms.html page"""
-    return FileResponse(str(BASE_DIR / "terms.html"))
+    file_path = os.path.join(BASE_DIR, "terms.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="terms.html not found")
 
 # Serve CSS files
 @app.get("/style.css")
 async def serve_style_css():
     """Serve style.css"""
-    return FileResponse(str(BASE_DIR / "style.css"), media_type="text/css")
+    file_path = os.path.join(BASE_DIR, "style.css")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="style.css not found")
 
 @app.get("/mobile-fixes.css")
 async def serve_mobile_css():
     """Serve mobile-fixes.css"""
-    return FileResponse(str(BASE_DIR / "mobile-fixes.css"), media_type="text/css")
+    file_path = os.path.join(BASE_DIR, "mobile-fixes.css")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="mobile-fixes.css not found")
 
 @app.get("/styles-simple.css")
 async def serve_simple_css():
     """Serve styles-simple.css"""
-    return FileResponse(str(BASE_DIR / "styles-simple.css"), media_type="text/css")
+    file_path = os.path.join(BASE_DIR, "styles-simple.css")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="styles-simple.css not found")
 
 # Serve JS files
 @app.get("/script.js")
 async def serve_script_js():
     """Serve script.js"""
-    return FileResponse(str(BASE_DIR / "script.js"), media_type="application/javascript")
+    file_path = os.path.join(BASE_DIR, "script.js")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="script.js not found")
 
 # Serve image files
 @app.get("/student-side.png")
 async def serve_student_image():
     """Serve student-side.png"""
-    return FileResponse(str(BASE_DIR / "student-side.png"), media_type="image/png")
+    file_path = os.path.join(BASE_DIR, "student-side.png")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="student-side.png not found")
 
 @app.get("/admin.png")
 async def serve_admin_image():
     """Serve admin.png"""
-    return FileResponse(str(BASE_DIR / "admin.png"), media_type="image/png")
+    file_path = os.path.join(BASE_DIR, "admin.png")
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="admin.png not found")
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
